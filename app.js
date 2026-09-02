@@ -1,17 +1,119 @@
-const K='fraisProxiProducts';let data=JSON.parse(localStorage.getItem(K)||'[]'),filter='all';
-const $=x=>document.getElementById(x),iso=d=>{let x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
-const add=(d,n)=>{let x=new Date(d);x.setDate(x.getDate()+n);return x},fmt=d=>new Intl.DateTimeFormat('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(d));
-function monday(d=new Date()){let x=new Date(d),n=(x.getDay()+6)%7;x.setDate(x.getDate()-n);x.setHours(0,0,0,0);return x}
-function status(p){let t=iso(new Date()),tom=iso(add(new Date(),1)),e=p.dlc;if(e<=t)return['À retirer','danger'];if(e===tom)return['Demain','warn'];let end=add(monday(),6);return new Date(e)<=end?['Cette semaine','ok']:['À venir','ok']}
-function save(){localStorage.setItem(K,JSON.stringify(data))}
-function show(id){['home','add','products','stats'].forEach(x=>$(x).hidden=x!==id);if(id==='stats')renderStats()}
-function match(p){let s=status(p)[0];if(filter==='today')return s==='À retirer';if(filter==='tomorrow')return s==='Demain';if(filter==='week')return ['À retirer','Demain','Cette semaine'].includes(s);return true}
-function render(){let now=new Date();$('today').textContent=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long'}).format(now);$('week').textContent=`Semaine du ${fmt(monday())} au ${fmt(add(monday(),6))}`;
-let active=data.filter(p=>!p.done);$('cToday').textContent=active.filter(p=>status(p)[0]==='À retirer').reduce((a,p)=>a+p.qty,0);$('cTomorrow').textContent=active.filter(p=>status(p)[0]==='Demain').reduce((a,p)=>a+p.qty,0);$('cWeek').textContent=active.filter(p=>['À retirer','Demain','Cette semaine'].includes(status(p)[0])).reduce((a,p)=>a+p.qty,0);
-$('days').innerHTML=[0,1,2,3,4].map(i=>{let d=add(monday(),i),n=active.filter(p=>p.dlc===iso(d)).reduce((a,p)=>a+p.qty,0);return `<div class=day><b>${['Lun','Mar','Mer','Jeu','Ven'][i]}</b><span>${d.getDate()}</span><strong>${n}</strong></div>`}).join('');renderList()}
-function renderList(){let term=($('search')?.value||'').toLowerCase();let arr=data.filter(p=>match(p)&&p.name.toLowerCase().includes(term)).sort((a,b)=>a.dlc.localeCompare(b.dlc));$('list').innerHTML=arr.length?arr.map(p=>{let s=status(p);return `<div class=item><div class=info><b>${p.name} ×${p.qty}</b><small>${p.rayon} · DLC ${fmt(p.dlc)}${p.barcode?' · '+p.barcode:''}</small><span class="badge ${s[1]}">${p.done?'Retiré':s[0]}</span></div><button class=done onclick="done('${p.id}')">✓</button><button class=del onclick="del('${p.id}')">×</button></div>`}).join(''):'<p>Aucun produit.</p>'}
-function filterList(f){filter=f;show('products');renderList()}
-function done(id){let p=data.find(x=>x.id===id);p.done=!p.done;p.doneAt=p.done?new Date().toISOString():null;save();render()}
-function del(id){data=data.filter(x=>x.id!==id);save();render()}
-function renderStats(){let w=data.filter(p=>new Date(p.dlc)>=monday()&&new Date(p.dlc)<=add(monday(),7)),done=w.filter(p=>p.done).reduce((a,p)=>a+p.qty,0),pending=w.filter(p=>!p.done).reduce((a,p)=>a+p.qty,0);let by={};w.forEach(p=>by[p.rayon]=(by[p.rayon]||0)+p.qty);$('statsBox').innerHTML=`<div class="card green"><b>${done}</b><span>produits retirés</span></div><div class="card orange"><b>${pending}</b><span>en attente</span></div><h3>Répartition par rayon</h3>`+Object.entries(by).map(([k,v])=>`<div class=item><div class=info><b>${k}</b></div><strong>${v}</strong></div>`).join('')}
-$('form').onsubmit=e=>{e.preventDefault();data.push({id:Date.now().toString(36),name:$('name').value.trim(),barcode:$('barcode').value.trim(),qty:+$('qty').value,dlc:$('dlc').value,rayon:$('rayon').value,notes:$('notes').value.trim(),done:false});save();e.target.reset();$('qty').value=1;render();filterList('all')};render();
+const KEY="fraisProxiProductsV3", STORE="fraisProxiStoreV3", STARTED="fraisProxiStartedV3";
+let products=JSON.parse(localStorage.getItem(KEY)||"[]");
+let selectedDate=new Date();selectedDate.setHours(0,0,0,0);
+let activeFilter="all", dailyMode="today", stream=null, scanTimer=null;
+const $=id=>document.getElementById(id), $$=s=>[...document.querySelectorAll(s)];
+const toISO=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
+const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
+const fmt=d=>new Intl.DateTimeFormat("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date(d));
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+function monday(d){const x=new Date(d),n=(x.getDay()+6)%7;x.setDate(x.getDate()-n);x.setHours(0,0,0,0);return x}
+function sunday(d){const x=monday(d);x.setDate(x.getDate()+6);x.setHours(23,59,59,999);return x}
+function qty(a){return a.reduce((n,p)=>n+(+p.quantity||0),0)}
+function save(){localStorage.setItem(KEY,JSON.stringify(products))}
+function status(p){
+  if(p.done)return["Retiré","green"];
+  const e=new Date(p.expiry+"T00:00:00"),t=new Date(toISO(selectedDate)+"T00:00:00");
+  const diff=Math.round((e-t)/86400000);
+  if(diff<=0)return["À retirer aujourd'hui","red"];
+  if(diff===1)return["Demain","amber"];
+  if(e<=sunday(selectedDate))return["Cette semaine","green"];
+  return["À venir","green"];
+}
+function icon(d){return({Frais:"🥬",Crèmerie:"🥛",Charcuterie:"🥩",Traiteur:"🍗",Épicerie:"🛒",Boucherie:"🥩",Poissonnerie:"🐟",Autre:"📦"})[d]||"📦"}
+function storeName(){return localStorage.getItem(STORE)||"Proxi - Mon magasin"}
+function updateStore(){ $("storeName").textContent=storeName();$("settingsStore").textContent=storeName() }
+function showView(id){
+  $$(".view").forEach(v=>v.classList.remove("active"));$(id).classList.add("active");
+  $$(".nav").forEach(n=>n.classList.toggle("active",n.dataset.view===id));
+  if(id==="scanView")startCamera();else stopCamera();window.scrollTo(0,0)
+}
+function toast(t){$("toast").textContent=t;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),1800)}
+function render(){
+  $("currentDate").textContent=new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(selectedDate);
+  const a=products.filter(p=>!p.done);
+  $("todayCount").textContent=qty(a.filter(p=>status(p)[1]==="red"));
+  $("tomorrowCount").textContent=qty(a.filter(p=>status(p)[1]==="amber"));
+  $("weekCount").textContent=qty(a.filter(p=>{const d=new Date(p.expiry+"T00:00:00");return d>=monday(selectedDate)&&d<=sunday(selectedDate)}));
+  renderUpcoming();renderProducts();renderDaily();renderStats()
+}
+function renderUpcoming(){
+  const labs=["Lun","Mar","Mer","Jeu","Ven"],m=monday(selectedDate);
+  $("upcoming").innerHTML=labs.map((l,i)=>{const d=addDays(m,i),n=qty(products.filter(p=>!p.done&&toISO(new Date(p.expiry))===toISO(d)));return`<div class="day ${toISO(d)===toISO(selectedDate)?"active":""}"><b>${l}</b><span>${d.getDate()}</span><strong>${n}</strong></div>`}).join("")
+}
+function matches(p){
+  const term=$("search").value.trim().toLowerCase();
+  if(term&&!(`${p.name} ${p.department} ${p.barcode||""}`.toLowerCase().includes(term)))return false;
+  if(activeFilter==="all")return true;
+  if(activeFilter==="today")return status(p)[1]==="red"&&!p.done;
+  if(activeFilter==="tomorrow")return status(p)[1]==="amber"&&!p.done;
+  if(activeFilter==="week"){const d=new Date(p.expiry+"T00:00:00");return d>=monday(selectedDate)&&d<=sunday(selectedDate)&&!p.done}
+  return true
+}
+function productHTML(p){
+  const [lab,cl]=status(p);
+  return`<div class="product"><div class="prod-icon">${icon(p.department)}</div><div class="prod-info"><b>${esc(p.name)} ×${p.quantity}</b><div class="meta">${esc(p.department)} · DLC ${fmt(p.expiry)}${p.barcode?` · ${esc(p.barcode)}`:""}</div><span class="badge ${cl}">${lab}</span></div><button class="done-btn ${p.done?"done":""}" data-done="${p.id}">✓</button><button class="delete-btn" data-delete="${p.id}">×</button></div>`
+}
+function renderProducts(){
+  const arr=products.filter(matches).sort((a,b)=>a.expiry.localeCompare(b.expiry));
+  $("productList").innerHTML=arr.length?arr.map(productHTML).join(""):`<div class="panel" style="text-align:center;color:#74808a">Aucun produit.</div>`
+}
+function dailyProducts(){
+  const a=products.filter(p=>!p.done);
+  if(dailyMode==="today")return a.filter(p=>status(p)[1]==="red");
+  return a.filter(p=>status(p)[1]==="amber")
+}
+function renderDaily(){
+  const arr=dailyProducts();
+  $("dailyTitle").textContent=dailyMode==="today"?"À retirer aujourd'hui":"À surveiller demain";
+  $("dailyCount").textContent=`${qty(arr)} produits`;
+  const d=dailyMode==="today"?selectedDate:addDays(selectedDate,1);
+  $("dailyDate").textContent="📅 "+new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"}).format(d);
+  $("dailyList").innerHTML=arr.length?arr.map(productHTML).join(""):`<div class="panel" style="text-align:center;color:#74808a">Rien à retirer 🎉</div>`
+}
+function renderStats(){
+  const w=products.filter(p=>{const d=new Date(p.expiry+"T00:00:00");return d>=monday(selectedDate)&&d<=sunday(selectedDate)});
+  $("weekLine").textContent=`Semaine du ${fmt(monday(selectedDate))} au ${fmt(sunday(selectedDate))}`;
+  $("removedStat").textContent=qty(w.filter(p=>p.done));$("pendingStat").textContent=qty(w.filter(p=>!p.done));
+  $("lossStat").textContent=(qty(w.filter(p=>p.done))*0.65).toFixed(2).replace(".",",")+" €";
+  const map={};w.forEach(p=>map[p.department]=(map[p.department]||0)+(+p.quantity||0));const max=Math.max(1,...Object.values(map));
+  $("departmentStats").innerHTML=Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="bar-row"><div class="bar-label"><span>${esc(k)}</span><span>${v}</span></div><div class="bar"><i style="width:${v/max*100}%"></i></div></div>`).join("")||"<p>Aucune donnée.</p>";
+  const hist=products.filter(p=>p.done&&p.doneAt).sort((a,b)=>b.doneAt.localeCompare(a.doneAt)).slice(0,7);
+  $("history").innerHTML=hist.length?hist.map(p=>`<div class="history-row"><span>${fmt(p.doneAt)}</span><b>${esc(p.name)} ×${p.quantity}</b></div>`).join(""):"<p style='color:#74808a'>Aucun retrait.</p>"
+}
+async function startCamera(){
+  $("cameraPlaceholder").style.display="flex";
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}}});
+    $("video").srcObject=stream;await $("video").play();$("cameraPlaceholder").style.display="none";
+    if("BarcodeDetector" in window){
+      const detector=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});
+      scanTimer=setInterval(async()=>{try{const r=await detector.detect($("video"));if(r.length){$("barcode").value=r[0].rawValue;toast("Code détecté : "+r[0].rawValue);showView("addView")}}catch(e){}},700)
+    }
+  }catch(e){$("cameraPlaceholder").style.display="flex"}
+}
+function stopCamera(){if(scanTimer){clearInterval(scanTimer);scanTimer=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$("video").srcObject=null}
+function handleListClick(e){
+  const d=e.target.closest("[data-done]"),x=e.target.closest("[data-delete]");
+  if(d){const p=products.find(p=>p.id===d.dataset.done);p.done=!p.done;p.doneAt=p.done?new Date().toISOString():null;save();render()}
+  if(x){products=products.filter(p=>p.id!==x.dataset.delete);save();render();toast("Produit supprimé")}
+}
+if(localStorage.getItem(STARTED)){$("splash").classList.add("hidden");$("app").classList.remove("hidden")}
+$("startBtn").onclick=()=>{localStorage.setItem(STARTED,"1");$("splash").classList.add("hidden");$("app").classList.remove("hidden")};
+$$("[data-view]").forEach(b=>b.onclick=()=>showView(b.dataset.view));
+$("plusBtn").onclick=()=>showView("addView");$("manualBtn").onclick=()=>showView("addView");$("manualMode").onclick=()=>showView("addView");$("scanMode").onclick=()=>showView("scanView");
+$$("[data-open]").forEach(b=>b.onclick=()=>{const m=b.dataset.open;if(m==="week"){activeFilter="week";$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="week"));showView("productsView");renderProducts()}else{dailyMode=m;renderDaily();showView("dailyView")}});
+$("seeAll").onclick=()=>{activeFilter="all";showView("productsView");renderProducts()};
+$$(".filter").forEach(b=>b.onclick=()=>{activeFilter=b.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x===b));renderProducts()});
+$("search").oninput=renderProducts;
+$("qtyMinus").onclick=()=>$("quantity").value=Math.max(1,(+$("quantity").value||1)-1);
+$("qtyPlus").onclick=()=>$("quantity").value=(+$("quantity").value||1)+1;
+$("productForm").onsubmit=e=>{e.preventDefault();products.push({id:crypto.randomUUID?crypto.randomUUID():Date.now().toString(),name:$("name").value.trim(),quantity:+$("quantity").value,expiry:$("expiry").value,department:$("department").value,barcode:$("barcode").value.trim(),note:$("note").value.trim(),done:false,createdAt:new Date().toISOString()});save();e.target.reset();$("quantity").value=1;toast("Produit ajouté ✓");showView("productsView");render()};
+$("productList").onclick=handleListClick;$("dailyList").onclick=handleListClick;
+$("doneAll").onclick=()=>{dailyProducts().forEach(p=>{p.done=true;p.doneAt=new Date().toISOString()});save();render();toast("Tout est retiré ✓")};
+$("storeBtn").onclick=$("storeSettings").onclick=()=>{$("storeInput").value=storeName();$("storeDialog").showModal()};
+$("cancelStore").onclick=()=>$("storeDialog").close();
+$("saveStore").onclick=()=>{const v=$("storeInput").value.trim();if(v){localStorage.setItem(STORE,v);updateStore();$("storeDialog").close();toast("Magasin enregistré")} };
+$("menuBtn").onclick=()=>showView("settingsView");$("teamBtn").onclick=()=>toast("Comptes employés : prochaine étape");
+$("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify({store:storeName(),products},null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="frais-proxi-sauvegarde.json";a.click();URL.revokeObjectURL(a.href)};
+window.addEventListener("beforeunload",stopCamera);updateStore();render();

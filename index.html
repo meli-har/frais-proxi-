@@ -1,36 +1,177 @@
 <!doctype html>
-<html lang="fr"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#0b2032"><link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="style.css"><title>Frais Proxi</title></head>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b2032">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Frais Proxi">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  <title>Frais Proxi</title>
+</head>
 <body>
-<header><h1>Frais <span>Proxi</span></h1><small>Gestion des DLC du frais</small></header>
-<main>
-<section id="home">
-<div class="date"><b id="today"></b><small id="week"></small></div>
-<button class="card red" onclick="filterList('today')"><b id="cToday">0</b><span>À retirer aujourd'hui</span></button>
-<button class="card orange" onclick="filterList('tomorrow')"><b id="cTomorrow">0</b><span>À surveiller demain</span></button>
-<button class="card green" onclick="filterList('week')"><b id="cWeek">0</b><span>Cette semaine</span></button>
-<h2>Prochaines dates</h2><div id="days" class="days"></div>
-<button class="add" onclick="show('add')">+ Ajouter une DLC</button>
-</section>
+<div id="splash" class="splash">
+  <div class="leaf">🌱</div>
+  <h1>Frais <span>Proxi</span></h1>
+  <h2>Les DLC du frais,<br>plus simples à gérer !</h2>
+  <div class="basket">🛒</div>
+  <p>Enregistrez vos produits,<br>suivez leurs dates et retirez<br>le bon produit, au bon moment.</p>
+  <button id="startBtn" class="primary">Commencer</button>
+</div>
 
-<section id="add" hidden><h2>Ajouter un produit</h2>
-<form id="form">
-<label>Produit<input id="name" required placeholder="Ex : Yaourt nature"></label>
-<label>Code-barres<input id="barcode" inputmode="numeric" placeholder="Facultatif"></label>
-<label>Quantité<input id="qty" type="number" min="1" value="1" required></label>
-<label>DLC<input id="dlc" type="date" required></label>
-<label>Rayon<select id="rayon"><option>Frais</option><option>Crèmerie</option><option>Charcuterie</option><option>Traiteur</option><option>Épicerie</option><option>Autre</option></select></label>
-<label>Notes<textarea id="notes" placeholder="Marque, taille, lot..."></textarea></label>
-<button class="add" type="submit">Ajouter</button></form></section>
+<div id="app" class="app hidden">
+  <header class="topbar">
+    <button class="top-icon" id="menuBtn">☰</button>
+    <div class="brand">Frais <span>Proxi</span></div>
+    <button class="top-icon" id="teamBtn">👥</button>
+  </header>
 
-<section id="products" hidden><h2>Mes produits</h2>
-<input id="search" placeholder="Rechercher un produit..." oninput="renderList()">
-<div class="filters"><button onclick="filterList('all')">Tous</button><button onclick="filterList('today')">À retirer</button><button onclick="filterList('tomorrow')">Demain</button><button onclick="filterList('week')">Cette semaine</button></div>
-<div id="list"></div></section>
+  <main>
+    <section id="homeView" class="view active">
+      <button class="store-row" id="storeBtn">
+        <span>📍</span><strong id="storeName">Proxi - Mon magasin</strong><span>⌄</span>
+      </button>
 
-<section id="stats" hidden><h2>Bilan de la semaine</h2><div id="statsBox"></div></section>
-</main>
-<nav><button onclick="show('home')">⌂<small>Accueil</small></button><button onclick="filterList('all')">▣<small>Produits</small></button><button class="plus" onclick="show('add')">+</button><button onclick="show('stats')">◷<small>Bilan</small></button></nav>
-<script src="app.js"></script></body></html>
+      <button class="date-row" id="dateBtn">
+        <span>📅</span><strong id="currentDate"></strong><span>›</span>
+      </button>
+
+      <button class="status-card red" data-open="today">
+        <span class="round-icon">⚠</span>
+        <span class="status-text"><b>À retirer aujourd'hui</b><strong><span id="todayCount">0</span> produits</strong></span>
+        <span class="arrow">›</span>
+      </button>
+
+      <button class="status-card amber" data-open="tomorrow">
+        <span class="round-icon">◷</span>
+        <span class="status-text"><b>À surveiller demain</b><strong><span id="tomorrowCount">0</span> produits</strong></span>
+        <span class="arrow">›</span>
+      </button>
+
+      <button class="status-card green" data-open="week">
+        <span class="round-icon">✓</span>
+        <span class="status-text"><b>Cette semaine</b><strong><span id="weekCount">0</span> produits</strong></span>
+        <span class="arrow">›</span>
+      </button>
+
+      <div class="section-head"><h2>Prochaines dates</h2><button id="seeAll">Voir tout</button></div>
+      <div id="upcoming" class="upcoming"></div>
+    </section>
+
+    <section id="addView" class="view">
+      <div class="page-title"><button class="back" data-view="homeView">‹</button><h1>Ajouter un produit</h1></div>
+      <div class="mode-tabs">
+        <button class="mode active" id="manualMode">✎<span>Saisie manuelle</span></button>
+        <button class="mode" id="scanMode">▥<span>Scanner code-barres</span></button>
+      </div>
+
+      <form id="productForm" class="form-card">
+        <label>Produit *<input id="name" required placeholder="Ex : Yaourt nature"></label>
+        <label>Quantité *
+          <div class="qty">
+            <button type="button" id="qtyMinus">−</button>
+            <input id="quantity" type="number" min="1" value="1" required>
+            <button type="button" id="qtyPlus">+</button>
+          </div>
+        </label>
+        <label>DLC *<input id="expiry" type="date" required></label>
+        <label>Rayon *
+          <select id="department">
+            <option>Crèmerie</option><option>Charcuterie</option><option>Frais</option>
+            <option>Traiteur</option><option>Épicerie</option><option>Boucherie</option>
+            <option>Poissonnerie</option><option>Autre</option>
+          </select>
+        </label>
+        <label>Code-barres<input id="barcode" inputmode="numeric" placeholder="Facultatif"></label>
+        <label>Notes <span>(optionnel)</span><textarea id="note" rows="3" placeholder="Ex : marque, taille, lot…"></textarea></label>
+        <button class="primary full" type="submit">Ajouter</button>
+      </form>
+    </section>
+
+    <section id="scanView" class="view scan-view">
+      <div class="dark-page-title"><button class="back light" data-view="homeView">‹</button><h1>Scanner le code-barres</h1></div>
+      <div class="camera">
+        <video id="video" playsinline muted></video>
+        <div class="camera-placeholder" id="cameraPlaceholder">
+          <span>▥</span><b>Caméra</b><small>Autorisez l'accès à la caméra</small>
+        </div>
+        <div class="corners"><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="scan-card">
+        <span class="barcode-big">▥</span>
+        <p>Scannez le code-barres du produit pour remplir automatiquement son numéro.</p>
+      </div>
+      <button class="outline full" id="manualBtn">✎ Saisir manuellement</button>
+    </section>
+
+    <section id="productsView" class="view">
+      <div class="page-title"><button class="back" data-view="homeView">‹</button><h1>Mes produits</h1></div>
+      <input class="search" id="search" type="search" placeholder="⌕ Rechercher un produit…">
+      <div class="filters">
+        <button class="filter active" data-filter="all">Tous</button>
+        <button class="filter" data-filter="today">À retirer</button>
+        <button class="filter" data-filter="tomorrow">Demain</button>
+        <button class="filter" data-filter="week">Cette semaine</button>
+      </div>
+      <div id="productList" class="product-list"></div>
+    </section>
+
+    <section id="dailyView" class="view daily-view">
+      <div class="daily-header">
+        <div class="dark-page-title"><button class="back light" data-view="homeView">‹</button><h1 id="dailyTitle">À retirer aujourd'hui</h1><span id="dailyCount" class="pill">0 produits</span></div>
+        <small id="dailyDate">📅</small>
+      </div>
+      <div id="dailyList" class="product-list"></div>
+      <button class="primary full sticky-action" id="doneAll">✓ Tout est retiré !</button>
+    </section>
+
+    <section id="statsView" class="view">
+      <div class="page-title"><button class="back" data-view="homeView">‹</button><h1>Bilan de la semaine</h1></div>
+      <p class="weekline" id="weekLine"></p>
+
+      <div class="kpis">
+        <div class="kpi red-soft"><span>ⓘ</span><strong id="removedStat">0</strong><small>Retirés</small></div>
+        <div class="kpi amber-soft"><span>◷</span><strong id="pendingStat">0</strong><small>En attente</small></div>
+        <div class="kpi green-soft"><span>◉</span><strong id="lossStat">0 €</strong><small>Pertes estimées</small></div>
+      </div>
+
+      <div class="panel"><h2>Répartition par rayon</h2><div id="departmentStats"></div></div>
+      <div class="panel"><div class="section-head"><h2>Historique des retraits</h2><button>Voir tout</button></div><div id="history"></div></div>
+    </section>
+
+    <section id="settingsView" class="view">
+      <div class="page-title"><button class="back" data-view="homeView">‹</button><h1>Paramètres</h1></div>
+      <div class="settings">
+        <button id="storeSettings">💎<span><b>Informations du magasin</b><small id="settingsStore">Mon magasin</small></span>›</button>
+        <button id="employeeSettings">👥<span><b>Employés</b><small>Gestion des accès</small></span>›</button>
+        <button>▦<span><b>Rayons</b><small>Liste des rayons</small></span>›</button>
+        <button>🔔<span><b>Notifications</b><small>Rappels et alertes</small></span>›</button>
+        <button id="exportBtn">☁<span><b>Sauvegarde des données</b><small>Exporter</small></span>›</button>
+        <button>ⓘ<span><b>À propos</b><small>Version 3.0</small></span>›</button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav active" data-view="homeView">⌂<span>Accueil</span></button>
+    <button class="nav" data-view="productsView">▣<span>Produits</span></button>
+    <button class="plus" id="plusBtn">＋</button>
+    <button class="nav" data-view="scanView">▥<span>Scan</span></button>
+    <button class="nav" data-view="settingsView">•••<span>Plus</span></button>
+  </nav>
+</div>
+
+<dialog id="storeDialog">
+  <div class="dialog-card">
+    <h2>Informations du magasin</h2>
+    <label>Nom du magasin<input id="storeInput" placeholder="Ex : Proxi - Migennes"></label>
+    <div class="dialog-buttons"><button id="cancelStore" class="outline">Annuler</button><button id="saveStore" class="primary">Enregistrer</button></div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+<script src="app.js?v=3"></script>
+</body>
+</html>
