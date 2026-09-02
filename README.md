@@ -1,4 +1,4 @@
-# Frais Proxi V4.2
+# Frais Proxi V4.3
 
 Version synchronisée avec Supabase pour **Proxi - Monéteau**.
 
@@ -17,3 +17,6 @@ Pour éviter une erreur de séquence lors de l'ajout de produits, exécuter une 
 grant usage, select on all sequences in schema public to authenticated;
 alter table public.produits add column if not exists retire_at timestamptz;
 ```
+
+
+V4.3 : nouvelle tentative automatique de connexion Supabase et message d’erreur précis.

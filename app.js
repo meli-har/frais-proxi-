@@ -2,7 +2,7 @@ const SUPABASE_URL = 'https://sbimesnrwrxgkqkfhiaz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ASbg_BcoGRlcJLwsFX7utw_4hTFpBmp';
 const db = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const KS='fpV4store', KC='fpV4code', KD='fpV4departments', KN='fpV4notifications', KM='fpV42magasinId';
+const KS='fpV4store', KC='fpV4code', KD='fpV4departments', KN='fpV4notifications', KM='fpV43magasinId';
 let products=[], scanner=false, last='', dailyMode='today', filter='all', magasinId=localStorage.getItem(KM)||null, syncTimer=null;
 const $=x=>document.getElementById(x), $$=s=>[...document.querySelectorAll(s)];
 const iso=d=>{let x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
@@ -22,11 +22,16 @@ function qty(a){return a.reduce((n,p)=>n+(+p.quantity||1),0)}
 function mapRow(r){return {id:r.id,name:r.nom,barcode:r.code_barres||'',quantity:r.quantite||1,expiry:r.dlc,department:r.rayon||'Frais',note:r.notes||'',done:!!r.retire,doneAt:r.retire_at||null}}
 async function ensureAnonSession(){
   if(!db) throw new Error('Supabase indisponible');
-  let {data:{session}}=await db.auth.getSession();
-  if(session) return session;
-  let {data,error}=await db.auth.signInAnonymously();
-  if(error) throw error;
-  return data.session;
+  const current=await db.auth.getSession();
+  if(current?.data?.session) return current.data.session;
+  let lastError=null;
+  for(let attempt=1;attempt<=3;attempt++){
+    const {data,error}=await db.auth.signInAnonymously();
+    if(!error && data?.session) return data.session;
+    lastError=error||new Error('Session anonyme non créée');
+    if(attempt<3) await new Promise(r=>setTimeout(r,1200*attempt));
+  }
+  throw lastError;
 }
 function deviceLabel(){let ua=navigator.userAgent||''; if(/iPhone/i.test(ua))return 'iPhone'; if(/iPad/i.test(ua))return 'iPad'; if(/Android/i.test(ua))return 'Android'; return 'Téléphone'}
 async function connectStore(code){
@@ -93,7 +98,7 @@ function onDetected(r){let code=r?.codeResult?.code;if(!code||code===last)return
 function stopScan(){if(scanner&&window.Quagga){try{Quagga.stop()}catch(e){}scanner=false}}
 
 $('startBtn').onclick=()=>{$('welcome').classList.add('hidden');$('login').classList.remove('hidden');$('shopCode').value=localStorage.getItem(KC)||'582941'};
-$('loginBtn').onclick=async()=>{let c=$('shopCode').value.trim();if(c.length<4)return toast('Entrez le code magasin');$('loginBtn').disabled=true;try{await connectStore(c);$('login').classList.add('hidden');$('app').classList.remove('hidden');render();toast('Magasin connecté')}catch(e){console.error(e);setSync('Connexion impossible');toast((e.message||'Code magasin incorrect').includes('Anonymous')?'Activez les connexions anonymes dans Supabase':'Code magasin incorrect ou connexion impossible')}finally{$('loginBtn').disabled=false}};
+$('loginBtn').onclick=async()=>{let c=$('shopCode').value.trim();if(c.length<4)return toast('Entrez le code magasin');$('loginBtn').disabled=true;try{await connectStore(c);$('login').classList.add('hidden');$('app').classList.remove('hidden');render();toast('Magasin connecté')}catch(e){console.error('Connexion Frais Proxi:',e);const msg=(e?.message||'Connexion impossible').trim();setSync(msg);if(/anonymous sign-ins are disabled/i.test(msg))toast('Connexion anonyme non encore active côté Supabase');else if(/invalid|code magasin|incorrect/i.test(msg))toast('Code magasin incorrect');else toast('Connexion impossible : '+msg.slice(0,80))}finally{$('loginBtn').disabled=false}};
 $$('[data-view]').forEach(b=>b.onclick=()=>show(b.dataset.view));$$('[data-daily]').forEach(b=>b.onclick=()=>openDaily(b.dataset.daily));$('addBtn').onclick=()=>show('addView');$('scanTab').onclick=()=>show('scanView');$('minus').onclick=()=>{$('quantity').value=Math.max(1,+$('quantity').value-1)};$('plusQty').onclick=()=>{$('quantity').value=+$('quantity').value+1};
 $('productForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');let p={name:$('name').value.trim(),quantity:+$('quantity').value,expiry:$('expiry').value,department:$('department').value,note:$('note').value.trim(),barcode:$('barcode').value};try{await addProductRemote(p);e.target.reset();$('quantity').value=1;$('expiry').value=iso(today());toast('Produit ajouté et synchronisé');show('homeView')}catch(err){console.error(err);toast('Impossible d’ajouter le produit')}};
 $('search').oninput=render;$$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;$$('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()});
@@ -101,7 +106,7 @@ document.addEventListener('click',async e=>{let b=e.target.closest('[data-done]'
 $('doneAll').onclick=async()=>{let a=arr(dailyMode);try{for(const p of a)await setDoneRemote(p.id,true);toast('Tout est retiré');openDaily(dailyMode)}catch(e){toast('Une erreur est survenue')}};
 $('manualBarcodeBtn').onclick=()=>{let c=prompt('Numéro sous le code-barres :');if(c){$('barcode').value=c;show('addView')}};
 $('teamBtn').onclick=()=>show('employeesView');$('menuBtn').onclick=()=>show('settingsView');
-$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v4.2.json';a.click()};
+$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v4.3.json';a.click()};
 function getDepartments(){try{return JSON.parse(localStorage.getItem(KD)||'null')||['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}catch(e){return['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}}
 function saveDepartments(a){localStorage.setItem(KD,JSON.stringify(a));refreshDepartmentSelect()}
 function refreshDepartmentSelect(){let a=getDepartments(),sel=$('department'),cur=sel.value;sel.innerHTML=a.map(x=>`<option>${esc(x)}</option>`).join('');if(a.includes(cur))sel.value=cur}
