@@ -56,6 +56,70 @@ async function addProductRemote(p){
   const {error}=await db.from('produits').insert({magasin_id:+magasinId,nom:p.name,code_barres:p.barcode||null,quantite:p.quantity,dlc:p.expiry,rayon:p.department,notes:p.note||null,retire:false});
   if(error)throw error; await loadProducts(true);
 }
+
+async function findCatalogueProduct(code){
+  if(!db||!magasinId||!code)return null;
+  const {data,error}=await db.from('catalogue_produits').select('*').eq('magasin_id',magasinId).eq('code_barres',code).maybeSingle();
+  if(error){
+    if(/catalogue_produits|does not exist|schema cache/i.test(error.message||'')) return null;
+    console.warn('Catalogue:',error);
+    return null;
+  }
+  return data||null;
+}
+function guessDepartment(p){
+  const txt=((p.categories||'')+' '+((p.categories_tags||[]).join(' '))).toLowerCase();
+  if(/milk|dairy|cheese|yog|yaourt|cream|crème|fromage|lait/.test(txt))return 'Crèmerie';
+  if(/charcut|ham|jambon|sausage|saucisson|pork|porc/.test(txt))return 'Charcuterie';
+  if(/fish|seafood|poisson|saumon|thon|crevette/.test(txt))return 'Poissonnerie';
+  if(/meat|beef|boeuf|bœuf|steak|veau|agneau/.test(txt))return 'Boucherie';
+  if(/prepared|ready meal|meal|traiteur|pizza|sandwich/.test(txt))return 'Traiteur';
+  if(/fruit|vegetable|salad|salade|tomato|tomate|fresh/.test(txt))return 'Frais';
+  return 'Épicerie';
+}
+async function lookupOpenFoodFacts(code){
+  try{
+    const url='https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json?fields=code,product_name,product_name_fr,brands,quantity,categories,categories_tags';
+    const r=await fetch(url,{headers:{'Accept':'application/json'}});
+    if(!r.ok)return null;
+    const j=await r.json();
+    if(j.status!==1||!j.product)return null;
+    const p=j.product;
+    const name=(p.product_name_fr||p.product_name||'').trim();
+    if(!name)return null;
+    return {nom:name,marque:(p.brands||'').trim(),rayon:guessDepartment(p),notes:(p.quantity||'').trim(),source:'openfoodfacts'};
+  }catch(e){console.warn('Open Food Facts:',e);return null}
+}
+async function rememberCatalogueProduct(p){
+  if(!db||!magasinId||!p.barcode||!p.name)return;
+  const payload={magasin_id:+magasinId,code_barres:p.barcode,nom:p.name,marque:'',rayon:p.department||null,notes:p.note||null,source:'magasin',updated_at:new Date().toISOString()};
+  const {error}=await db.from('catalogue_produits').upsert(payload,{onConflict:'magasin_id,code_barres'});
+  if(error&&!/catalogue_produits|does not exist|schema cache/i.test(error.message||''))console.warn('Enregistrement catalogue:',error);
+}
+async function identifyBarcode(code){
+  $('barcode').value=code;
+  $('scanStatus').textContent='Recherche du produit…';
+  const local=await findCatalogueProduct(code);
+  if(local){
+    $('name').value=local.nom||'';
+    if(local.rayon){const opts=[...$('department').options].map(o=>o.value);if(opts.includes(local.rayon))$('department').value=local.rayon}
+    if(local.notes)$('note').value=local.notes;
+    toast('Produit reconnu : '+(local.nom||code));
+    show('addView');
+    return;
+  }
+  const off=await lookupOpenFoodFacts(code);
+  if(off){
+    $('name').value=off.nom;
+    const opts=[...$('department').options].map(o=>o.value);if(opts.includes(off.rayon))$('department').value=off.rayon;
+    const extras=[off.marque,off.notes].filter(Boolean).join(' · ');if(extras)$('note').value=extras;
+    toast('Produit reconnu automatiquement');
+  }else{
+    $('name').value='';
+    toast('Produit inconnu : entrez son nom une fois');
+  }
+  show('addView');
+}
 async function setDoneRemote(id,done){
   const payload={retire:done};
   if(done)payload.retire_at=new Date().toISOString(); else payload.retire_at=null;
@@ -94,19 +158,19 @@ function startScan(){
   Quagga.init({inputStream:{name:'Live',type:'LiveStream',target:$('reader'),constraints:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},area:{top:'5%',right:'3%',left:'3%',bottom:'5%'}},locator:{patchSize:'large',halfSample:false},numOfWorkers:navigator.hardwareConcurrency||4,frequency:15,decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader','code_39_reader']},locate:true},err=>{if(err){$('scanStatus').textContent='Impossible d’ouvrir la caméra.';return}scanner=true;Quagga.start()});
   Quagga.offDetected(onDetected);Quagga.onDetected(onDetected);
 }
-function onDetected(r){let code=r?.codeResult?.code;if(!code||code===last)return;last=code;navigator.vibrate?.(80);$('barcode').value=code;toast('Code détecté : '+code);stopScan();show('addView')}
+function onDetected(r){let code=r?.codeResult?.code;if(!code||code===last)return;last=code;navigator.vibrate?.(80);stopScan();identifyBarcode(code)}
 function stopScan(){if(scanner&&window.Quagga){try{Quagga.stop()}catch(e){}scanner=false}}
 
 $('startBtn').onclick=()=>{$('welcome').classList.add('hidden');$('login').classList.remove('hidden');$('shopCode').value=localStorage.getItem(KC)||'582941'};
 $('loginBtn').onclick=async()=>{let c=$('shopCode').value.trim();if(c.length<4)return toast('Entrez le code magasin');$('loginBtn').disabled=true;try{await connectStore(c);$('login').classList.add('hidden');$('app').classList.remove('hidden');render();toast('Magasin connecté')}catch(e){console.error('Connexion Frais Proxi:',e);const msg=(e?.message||'Connexion impossible').trim();setSync(msg);if(/anonymous sign-ins are disabled/i.test(msg))toast('Connexion anonyme non encore active côté Supabase');else if(/invalid|code magasin|incorrect/i.test(msg))toast('Code magasin incorrect');else toast('Connexion impossible : '+msg.slice(0,80))}finally{$('loginBtn').disabled=false}};
 $$('[data-view]').forEach(b=>b.onclick=()=>show(b.dataset.view));$$('[data-daily]').forEach(b=>b.onclick=()=>openDaily(b.dataset.daily));$('addBtn').onclick=()=>show('addView');$('scanTab').onclick=()=>show('scanView');$('minus').onclick=()=>{$('quantity').value=Math.max(1,+$('quantity').value-1)};$('plusQty').onclick=()=>{$('quantity').value=+$('quantity').value+1};
-$('productForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');let p={name:$('name').value.trim(),quantity:+$('quantity').value,expiry:$('expiry').value,department:$('department').value,note:$('note').value.trim(),barcode:$('barcode').value};try{await addProductRemote(p);e.target.reset();$('quantity').value=1;$('expiry').value=iso(today());toast('Produit ajouté et synchronisé');show('homeView')}catch(err){console.error(err);toast('Impossible d’ajouter le produit')}};
+$('productForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');let p={name:$('name').value.trim(),quantity:+$('quantity').value,expiry:$('expiry').value,department:$('department').value,note:$('note').value.trim(),barcode:$('barcode').value};try{await addProductRemote(p);await rememberCatalogueProduct(p);e.target.reset();$('quantity').value=1;$('expiry').value=iso(today());toast('Produit ajouté et mémorisé');show('homeView')}catch(err){console.error(err);toast('Impossible d’ajouter le produit')}};
 $('search').oninput=render;$$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;$$('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()});
 document.addEventListener('click',async e=>{let b=e.target.closest('[data-done]');if(!b)return;let p=products.find(x=>x.id==b.dataset.done);if(!p)return;try{await setDoneRemote(p.id,!p.done);openDaily(dailyMode);toast(p.done?'Produit remis en attente':'Produit retiré')}catch(err){console.error(err);toast('Modification impossible')}});
 $('doneAll').onclick=async()=>{let a=arr(dailyMode);try{for(const p of a)await setDoneRemote(p.id,true);toast('Tout est retiré');openDaily(dailyMode)}catch(e){toast('Une erreur est survenue')}};
-$('manualBarcodeBtn').onclick=()=>{let c=prompt('Numéro sous le code-barres :');if(c){$('barcode').value=c;show('addView')}};
+$('manualBarcodeBtn').onclick=()=>{let c=prompt('Numéro sous le code-barres :');if(c){stopScan();identifyBarcode(c.trim())}};
 $('teamBtn').onclick=()=>show('employeesView');$('menuBtn').onclick=()=>show('settingsView');
-$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v4.3.json';a.click()};
+$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v4.4.json';a.click()};
 function getDepartments(){try{return JSON.parse(localStorage.getItem(KD)||'null')||['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}catch(e){return['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}}
 function saveDepartments(a){localStorage.setItem(KD,JSON.stringify(a));refreshDepartmentSelect()}
 function refreshDepartmentSelect(){let a=getDepartments(),sel=$('department'),cur=sel.value;sel.innerHTML=a.map(x=>`<option>${esc(x)}</option>`).join('');if(a.includes(cur))sel.value=cur}
