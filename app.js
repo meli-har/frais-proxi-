@@ -1,7 +1,7 @@
 const KEY="fraisProxiProductsV3", STORE="fraisProxiStoreV3", STARTED="fraisProxiStartedV3";
 let products=JSON.parse(localStorage.getItem(KEY)||"[]");
 let selectedDate=new Date();selectedDate.setHours(0,0,0,0);
-let activeFilter="all", dailyMode="today", stream=null, scanTimer=null;
+let activeFilter="all", dailyMode="today", html5QrCode=null, scannerRunning=false;
 const $=id=>document.getElementById(id), $$=s=>[...document.querySelectorAll(s)];
 const toISO=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
@@ -84,15 +84,47 @@ function renderStats(){
 async function startCamera(){
   $("cameraPlaceholder").style.display="flex";
   try{
-    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}}});
-    $("video").srcObject=stream;await $("video").play();$("cameraPlaceholder").style.display="none";
-    if("BarcodeDetector" in window){
-      const detector=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e","code_128"]});
-      scanTimer=setInterval(async()=>{try{const r=await detector.detect($("video"));if(r.length){$("barcode").value=r[0].rawValue;toast("Code détecté : "+r[0].rawValue);showView("addView")}}catch(e){}},700)
-    }
-  }catch(e){$("cameraPlaceholder").style.display="flex"}
+    if(typeof Html5Qrcode==="undefined") throw new Error("Scanner indisponible");
+    html5QrCode = html5QrCode || new Html5Qrcode("reader");
+    const config = {
+      fps: 10,
+      qrbox: {width: 280, height: 130},
+      aspectRatio: 1.5,
+      formatsToSupport: [
+        Html5QrcodeSupportedFormats.EAN_13,
+        Html5QrcodeSupportedFormats.EAN_8,
+        Html5QrcodeSupportedFormats.UPC_A,
+        Html5QrcodeSupportedFormats.UPC_E,
+        Html5QrcodeSupportedFormats.CODE_128,
+        Html5QrcodeSupportedFormats.CODE_39
+      ]
+    };
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      config,
+      decodedText => {
+        $("barcode").value = decodedText;
+        toast("Code détecté : " + decodedText);
+        stopCamera().then(()=>showView("addView"));
+      },
+      ()=>{}
+    );
+    scannerRunning=true;
+    $("cameraPlaceholder").style.display="none";
+  }catch(e){
+    $("cameraPlaceholder").style.display="flex";
+    toast("Impossible d'ouvrir la caméra. Vérifie l'autorisation caméra.");
+  }
 }
-function stopCamera(){if(scanTimer){clearInterval(scanTimer);scanTimer=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}$("video").srcObject=null}
+async function stopCamera(){
+  try{
+    if(html5QrCode && scannerRunning){
+      await html5QrCode.stop();
+      await html5QrCode.clear();
+    }
+  }catch(e){}
+  scannerRunning=false;
+}
 function handleListClick(e){
   const d=e.target.closest("[data-done]"),x=e.target.closest("[data-delete]");
   if(d){const p=products.find(p=>p.id===d.dataset.done);p.done=!p.done;p.doneAt=p.done?new Date().toISOString():null;save();render()}
