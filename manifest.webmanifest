@@ -1,9 +1,1 @@
-{
-  "name": "Frais Proxi",
-  "short_name": "Frais Proxi",
-  "start_url": "./?v=3",
-  "display": "standalone",
-  "background_color": "#0b2032",
-  "theme_color": "#0b2032",
-  "lang": "fr"
-}
+{"name":"Frais Proxi","short_name":"Frais Proxi","start_url":"./index.html?v=40","display":"standalone","background_color":"#071d2d","theme_color":"#071d2d"}
