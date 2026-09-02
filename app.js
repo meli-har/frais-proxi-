@@ -1,7 +1,7 @@
 const KEY="fraisProxiProductsV3", STORE="fraisProxiStoreV3", STARTED="fraisProxiStartedV3";
 let products=JSON.parse(localStorage.getItem(KEY)||"[]");
 let selectedDate=new Date();selectedDate.setHours(0,0,0,0);
-let activeFilter="all", dailyMode="today", codeReader=null, scannerRunning=false;
+let activeFilter="all", dailyMode="today", scannerRunning=false, lastDetectedCode="";
 const $=id=>document.getElementById(id), $$=s=>[...document.querySelectorAll(s)];
 const toISO=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
@@ -83,61 +83,70 @@ function renderStats(){
 }
 async function startCamera(){
   $("cameraPlaceholder").style.display="flex";
+  $("scanStatus").textContent="Ouverture de la caméra…";
+  lastDetectedCode="";
   try{
-    if(!window.ZXing) throw new Error("Scanner indisponible");
-    const hints = new Map();
-    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-      ZXing.BarcodeFormat.EAN_13,
-      ZXing.BarcodeFormat.EAN_8,
-      ZXing.BarcodeFormat.UPC_A,
-      ZXing.BarcodeFormat.UPC_E,
-      ZXing.BarcodeFormat.CODE_128,
-      ZXing.BarcodeFormat.CODE_39,
-      ZXing.BarcodeFormat.ITF,
-      ZXing.BarcodeFormat.CODABAR
-    ]);
-    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
-    codeReader = new ZXing.BrowserMultiFormatReader(hints, 300);
-    scannerRunning = true;
+    if(typeof Quagga==="undefined") throw new Error("Scanner indisponible");
+    await new Promise((resolve,reject)=>{
+      Quagga.init({
+        inputStream:{
+          name:"Live",
+          type:"LiveStream",
+          target:document.querySelector("#reader"),
+          constraints:{
+            facingMode:"environment",
+            width:{min:640,ideal:1280},
+            height:{min:480,ideal:720}
+          },
+          area:{top:"8%",right:"4%",left:"4%",bottom:"8%"}
+        },
+        locator:{patchSize:"medium",halfSample:true},
+        numOfWorkers:navigator.hardwareConcurrency ? Math.min(4,navigator.hardwareConcurrency) : 2,
+        frequency:12,
+        decoder:{
+          readers:[
+            "ean_reader","ean_8_reader","upc_reader","upc_e_reader",
+            "code_128_reader","code_39_reader","i2of5_reader"
+          ],
+          multiple:false
+        },
+        locate:true
+      },err=>err?reject(err):resolve());
+    });
+    scannerRunning=true;
     $("cameraPlaceholder").style.display="none";
-
-    await codeReader.decodeFromConstraints(
-      {
-        audio: false,
-        video: {
-          facingMode: { ideal: "environment" },
-          width: { ideal: 1920 },
-          height: { ideal: 1080 }
-        }
-      },
-      "reader",
-      (result, err) => {
-        if(result && scannerRunning){
-          const code = result.getText();
-          $("barcode").value = code;
-          toast("Code détecté : " + code);
-          stopCamera();
-          showView("addView");
-        }
-      }
-    );
+    $("scanStatus").textContent="Caméra active — rapprochez le code-barres, bien droit et sans reflet.";
+    Quagga.offDetected(onBarcodeDetected);
+    Quagga.onDetected(onBarcodeDetected);
+    Quagga.start();
   }catch(e){
     scannerRunning=false;
     $("cameraPlaceholder").style.display="flex";
-    toast("Impossible d'ouvrir le scanner. Vérifie l'autorisation caméra.");
+    $("scanStatus").textContent="Impossible d'ouvrir le scanner. Vérifiez l'autorisation caméra.";
+    toast("Scanner indisponible");
   }
 }
+function onBarcodeDetected(result){
+  if(!scannerRunning || !result?.codeResult?.code) return;
+  const code=String(result.codeResult.code).trim();
+  if(code===lastDetectedCode) return;
+  lastDetectedCode=code;
+  $("barcode").value=code;
+  $("scanStatus").textContent="Code détecté : "+code;
+  if(navigator.vibrate) navigator.vibrate(80);
+  toast("Code détecté : "+code);
+  stopCamera();
+  setTimeout(()=>showView("addView"),250);
+}
 function stopCamera(){
+  if(!scannerRunning) return;
   scannerRunning=false;
   try{
-    if(codeReader) codeReader.reset();
+    Quagga.offDetected(onBarcodeDetected);
+    Quagga.stop();
   }catch(e){}
-  codeReader=null;
-  const v=$("reader");
-  if(v && v.srcObject){
-    try{ v.srcObject.getTracks().forEach(t=>t.stop()); }catch(e){}
-    v.srcObject=null;
-  }
+  const reader=document.querySelector("#reader");
+  if(reader) reader.innerHTML="";
 }
 function handleListClick(e){
   const d=e.target.closest("[data-done]"),x=e.target.closest("[data-delete]");
@@ -147,7 +156,19 @@ function handleListClick(e){
 if(localStorage.getItem(STARTED)){$("splash").classList.add("hidden");$("app").classList.remove("hidden")}
 $("startBtn").onclick=()=>{localStorage.setItem(STARTED,"1");$("splash").classList.add("hidden");$("app").classList.remove("hidden")};
 $$("[data-view]").forEach(b=>b.onclick=()=>showView(b.dataset.view));
-$("plusBtn").onclick=()=>showView("addView");$("manualBtn").onclick=()=>showView("addView");$("manualMode").onclick=()=>showView("addView");$("scanMode").onclick=()=>showView("scanView");
+$("plusBtn").onclick=()=>showView("addView");
+$("manualBtn").onclick=()=>showView("addView");
+$("manualBarcodeBtn").onclick=()=>{
+  const code=prompt("Entre le numéro sous le code-barres :");
+  if(code && code.trim()){
+    $("barcode").value=code.trim();
+    stopCamera();
+    showView("addView");
+    toast("Code-barres ajouté");
+  }
+};
+$("manualMode").onclick=()=>showView("addView");
+$("scanMode").onclick=()=>showView("scanView");
 $$("[data-open]").forEach(b=>b.onclick=()=>{const m=b.dataset.open;if(m==="week"){activeFilter="week";$$(".filter").forEach(x=>x.classList.toggle("active",x.dataset.filter==="week"));showView("productsView");renderProducts()}else{dailyMode=m;renderDaily();showView("dailyView")}});
 $("seeAll").onclick=()=>{activeFilter="all";showView("productsView");renderProducts()};
 $$(".filter").forEach(b=>b.onclick=()=>{activeFilter=b.dataset.filter;$$(".filter").forEach(x=>x.classList.toggle("active",x===b));renderProducts()});

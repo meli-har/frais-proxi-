@@ -93,7 +93,7 @@
     <section id="scanView" class="view scan-view">
       <div class="dark-page-title"><button class="back light" data-view="homeView">‹</button><h1>Scanner le code-barres</h1></div>
       <div class="camera">
-        <video id="reader" playsinline muted></video>
+        <div id="reader"></div>
         <div class="camera-placeholder" id="cameraPlaceholder">
           <span>▥</span><b>Caméra</b><small>Autorisez l'accès à la caméra</small>
         </div>
@@ -101,9 +101,10 @@
       </div>
       <div class="scan-card">
         <span class="barcode-big">▥</span>
-        <p>Scannez le code-barres du produit pour remplir automatiquement son numéro.</p>
+        <p id="scanStatus">Placez le code-barres bien à plat au centre du cadre.</p>
       </div>
-      <button class="outline full" id="manualBtn">✎ Saisir manuellement</button>
+      <button class="outline full" id="manualBarcodeBtn">⌨ Saisir le code-barres</button>
+      <button class="outline full" id="manualBtn">✎ Saisir le produit manuellement</button>
     </section>
 
     <section id="productsView" class="view">
@@ -172,7 +173,7 @@
 </dialog>
 
 <div class="toast" id="toast"></div>
-<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
-<script src="app.js?v=32"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+<script src="app.js?v=33"></script>
 </body>
 </html>
