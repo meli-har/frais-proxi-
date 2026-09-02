@@ -1,110 +1,36 @@
 <!doctype html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#102131">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="style.css">
-  <title>Frais Proxi</title>
-</head>
+<html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b2032"><link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="style.css"><title>Frais Proxi</title></head>
 <body>
-  <header class="topbar">
-    <div>
-      <div class="brand">Frais <span>Proxi</span></div>
-      <div class="subtitle">Gestion des DLC du frais</div>
-    </div>
-    <button id="installBtn" class="icon-btn" hidden title="Installer">＋</button>
-  </header>
+<header><h1>Frais <span>Proxi</span></h1><small>Gestion des DLC du frais</small></header>
+<main>
+<section id="home">
+<div class="date"><b id="today"></b><small id="week"></small></div>
+<button class="card red" onclick="filterList('today')"><b id="cToday">0</b><span>À retirer aujourd'hui</span></button>
+<button class="card orange" onclick="filterList('tomorrow')"><b id="cTomorrow">0</b><span>À surveiller demain</span></button>
+<button class="card green" onclick="filterList('week')"><b id="cWeek">0</b><span>Cette semaine</span></button>
+<h2>Prochaines dates</h2><div id="days" class="days"></div>
+<button class="add" onclick="show('add')">+ Ajouter une DLC</button>
+</section>
 
-  <main>
-    <section id="homeView" class="view active">
-      <div class="date-row">
-        <button id="prevDay" class="small-btn">‹</button>
-        <div><strong id="currentDate"></strong><small id="currentWeek"></small></div>
-        <button id="nextDay" class="small-btn">›</button>
-      </div>
+<section id="add" hidden><h2>Ajouter un produit</h2>
+<form id="form">
+<label>Produit<input id="name" required placeholder="Ex : Yaourt nature"></label>
+<label>Code-barres<input id="barcode" inputmode="numeric" placeholder="Facultatif"></label>
+<label>Quantité<input id="qty" type="number" min="1" value="1" required></label>
+<label>DLC<input id="dlc" type="date" required></label>
+<label>Rayon<select id="rayon"><option>Frais</option><option>Crèmerie</option><option>Charcuterie</option><option>Traiteur</option><option>Épicerie</option><option>Autre</option></select></label>
+<label>Notes<textarea id="notes" placeholder="Marque, taille, lot..."></textarea></label>
+<button class="add" type="submit">Ajouter</button></form></section>
 
-      <div class="summary-grid">
-        <button class="summary danger" data-filter="today"><b id="todayCount">0</b><span>À retirer aujourd'hui</span></button>
-        <button class="summary warning" data-filter="tomorrow"><b id="tomorrowCount">0</b><span>À surveiller demain</span></button>
-        <button class="summary success" data-filter="week"><b id="weekCount">0</b><span>Cette semaine</span></button>
-      </div>
+<section id="products" hidden><h2>Mes produits</h2>
+<input id="search" placeholder="Rechercher un produit..." oninput="renderList()">
+<div class="filters"><button onclick="filterList('all')">Tous</button><button onclick="filterList('today')">À retirer</button><button onclick="filterList('tomorrow')">Demain</button><button onclick="filterList('week')">Cette semaine</button></div>
+<div id="list"></div></section>
 
-      <div class="section-title"><h2>Prochaines dates</h2><button id="seeAll" class="link-btn">Voir tout</button></div>
-      <div id="upcoming" class="upcoming"></div>
-
-      <button id="addFromHome" class="primary full">＋ Ajouter une DLC</button>
-    </section>
-
-    <section id="productsView" class="view">
-      <div class="page-head">
-        <div><h1>Mes produits</h1><p>Gère toutes les DLC enregistrées.</p></div>
-        <button id="addFromProducts" class="primary">＋ Ajouter</button>
-      </div>
-      <input id="search" class="input" type="search" placeholder="Rechercher un produit…">
-      <div class="tabs">
-        <button class="tab active" data-filter="all">Tous</button>
-        <button class="tab" data-filter="today">À retirer</button>
-        <button class="tab" data-filter="tomorrow">Demain</button>
-        <button class="tab" data-filter="week">Cette semaine</button>
-      </div>
-      <div id="productList" class="list"></div>
-    </section>
-
-    <section id="addView" class="view">
-      <div class="page-head">
-        <div><h1>Ajouter un produit</h1><p>Enregistre une DLC en quelques secondes.</p></div>
-      </div>
-      <form id="productForm" class="card form">
-        <label>Produit
-          <input id="name" class="input" required placeholder="Ex. Jambon blanc">
-        </label>
-        <div class="two">
-          <label>Quantité
-            <input id="quantity" class="input" type="number" min="1" value="1" required>
-          </label>
-          <label>DLC
-            <input id="expiry" class="input" type="date" required>
-          </label>
-        </div>
-        <label>Rayon
-          <select id="department" class="input">
-            <option>Frais</option><option>Crèmerie</option><option>Charcuterie</option>
-            <option>Traiteur</option><option>Épicerie</option><option>Boucherie</option>
-            <option>Poissonnerie</option><option>Autre</option>
-          </select>
-        </label>
-        <label>Note <span class="muted">(facultatif)</span>
-          <input id="note" class="input" placeholder="Ex. lot, marque…">
-        </label>
-        <button class="primary full" type="submit">Ajouter le produit</button>
-      </form>
-    </section>
-
-    <section id="statsView" class="view">
-      <div class="page-head"><div><h1>Bilan</h1><p>Un aperçu de ta semaine.</p></div></div>
-      <div class="stats-grid">
-        <div class="stat"><b id="statTotal">0</b><span>Produits enregistrés</span></div>
-        <div class="stat"><b id="statToday">0</b><span>À retirer aujourd'hui</span></div>
-        <div class="stat"><b id="statDone">0</b><span>Retirés</span></div>
-        <div class="stat"><b id="statPending">0</b><span>En attente</span></div>
-      </div>
-      <div class="card">
-        <h2>Répartition par rayon</h2>
-        <div id="departmentStats"></div>
-      </div>
-    </section>
-  </main>
-
-  <nav class="nav">
-    <button class="nav-btn active" data-view="homeView">⌂<span>Accueil</span></button>
-    <button class="nav-btn" data-view="productsView">▣<span>Produits</span></button>
-    <button class="nav-add" id="navAdd">＋</button>
-    <button class="nav-btn" data-view="statsView">◔<span>Bilan</span></button>
-  </nav>
-
-  <div id="toast" class="toast"></div>
-  <script src="app.js"></script>
-</body>
-</html>
+<section id="stats" hidden><h2>Bilan de la semaine</h2><div id="statsBox"></div></section>
+</main>
+<nav><button onclick="show('home')">⌂<small>Accueil</small></button><button onclick="filterList('all')">▣<small>Produits</small></button><button class="plus" onclick="show('add')">+</button><button onclick="show('stats')">◷<small>Bilan</small></button></nav>
+<script src="app.js"></script></body></html>

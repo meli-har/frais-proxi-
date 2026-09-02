@@ -3,8 +3,7 @@
   "short_name": "Frais Proxi",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f5f7f8",
-  "theme_color": "#102131",
-  "lang": "fr",
-  "description": "Gestion simple des DLC du frais"
+  "background_color": "#0b2032",
+  "theme_color": "#0b2032",
+  "lang": "fr"
 }

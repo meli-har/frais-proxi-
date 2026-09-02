@@ -1,92 +1,17 @@
-const KEY="fraisProxiProducts";
-let products=JSON.parse(localStorage.getItem(KEY)||"[]");
-let selectedDate=new Date(); selectedDate.setHours(0,0,0,0);
-let activeFilter="all";
-
-const $=id=>document.getElementById(id);
-const iso=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
-const today=()=>iso(selectedDate);
-const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
-const fmt=d=>new Intl.DateTimeFormat("fr-FR",{day:"2-digit",month:"2-digit",year:"numeric"}).format(new Date(d));
-const same=(a,b)=>iso(a)===iso(b);
-function save(){localStorage.setItem(KEY,JSON.stringify(products))}
-function status(p){
-  if(p.done)return ["Retiré","success"];
-  const d=new Date(p.expiry+"T00:00:00"), t=new Date(today()+"T00:00:00");
-  const diff=Math.round((d-t)/86400000);
-  if(diff<=0)return ["À retirer aujourd'hui","danger"];
-  if(diff===1)return ["Demain","warning"];
-  if(diff<=7)return ["Cette semaine","success"];
-  return ["À venir",""];
-}
-function icon(dep){return ({Frais:"🥬",Crèmerie:"🥛",Charcuterie:"🥩",Traiteur:"🍽️",Épicerie:"🛒",Boucherie:"🥩",Poissonnerie:"🐟",Autre:"📦"})[dep]||"📦"}
-function render(){
-  $("currentDate").textContent=new Intl.DateTimeFormat("fr-FR",{weekday:"long",day:"numeric",month:"long"}).format(selectedDate);
-  $("currentWeek").textContent="Semaine du "+fmt(startOfWeek(selectedDate))+" au "+fmt(endOfWeek(selectedDate));
-  const active=products.filter(p=>!p.done);
-  $("todayCount").textContent=active.filter(p=>status(p)[1]==="danger").reduce((n,p)=>n+p.quantity,0);
-  $("tomorrowCount").textContent=active.filter(p=>status(p)[1]==="warning").reduce((n,p)=>n+p.quantity,0);
-  $("weekCount").textContent=active.filter(p=>{const d=new Date(p.expiry);return d>=startOfWeek(selectedDate)&&d<=endOfWeek(selectedDate)}).reduce((n,p)=>n+p.quantity,0);
-  renderUpcoming(); renderProducts(); renderStats();
-}
-function startOfWeek(d){const x=new Date(d), day=(x.getDay()+6)%7;x.setDate(x.getDate()-day);x.setHours(0,0,0,0);return x}
-function endOfWeek(d){const x=startOfWeek(d);x.setDate(x.getDate()+6);return x}
-function renderUpcoming(){
-  const s=startOfWeek(selectedDate), labels=["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
-  $("upcoming").innerHTML=labels.slice(0,4).map((l,i)=>{const d=addDays(s,i), n=products.filter(p=>!p.done&&same(p.expiry,d)).reduce((a,p)=>a+p.quantity,0);return `<div class="day"><strong>${l}</strong><small>${d.getDate()}</small><b>${n}</b></div>`}).join("");
-}
-function matches(p){
-  if($("search").value.trim()&&!p.name.toLowerCase().includes($("search").value.trim().toLowerCase()))return false;
-  if(activeFilter==="all")return true;
-  const s=status(p)[1];
-  if(activeFilter==="today")return s==="danger";
-  if(activeFilter==="tomorrow")return s==="warning";
-  if(activeFilter==="week"){const d=new Date(p.expiry),s0=startOfWeek(selectedDate),e=endOfWeek(selectedDate);return d>=s0&&d<=e}
-  return true;
-}
-function renderProducts(){
-  const arr=products.filter(matches).sort((a,b)=>a.expiry.localeCompare(b.expiry));
-  $("productList").innerHTML=arr.length?arr.map(p=>{const [label,cl]=status(p);return `<div class="product">
-    <div class="product-icon">${icon(p.department)}</div><div class="product-main"><strong>${esc(p.name)} × ${p.quantity}</strong>
-    <div class="meta">${esc(p.department)} · DLC ${fmt(p.expiry)}${p.note?" · "+esc(p.note):""}</div>
-    <span class="badge ${cl}">${label}</span></div>
-    <button class="check ${p.done?"done":""}" data-done="${p.id}">${p.done?"✓":"✓"}</button>
-    <button class="delete" data-delete="${p.id}">×</button></div>`}).join(""):`<div class="card" style="text-align:center;color:#687681">Aucun produit trouvé.</div>`;
-}
-function renderStats(){
-  const week=products.filter(p=>{const d=new Date(p.expiry),s=startOfWeek(selectedDate),e=endOfWeek(selectedDate);return d>=s&&d<=e});
-  $("statTotal").textContent=week.reduce((n,p)=>n+p.quantity,0);
-  $("statToday").textContent=week.filter(p=>!p.done&&status(p)[1]==="danger").reduce((n,p)=>n+p.quantity,0);
-  $("statDone").textContent=week.filter(p=>p.done).reduce((n,p)=>n+p.quantity,0);
-  $("statPending").textContent=week.filter(p=>!p.done).reduce((n,p)=>n+p.quantity,0);
-  const map={};week.forEach(p=>map[p.department]=(map[p.department]||0)+p.quantity);
-  const max=Math.max(1,...Object.values(map));
-  $("departmentStats").innerHTML=Object.entries(map).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="bar-row"><div class="bar-label"><span>${esc(k)}</span><span>${v}</span></div><div class="bar"><i style="width:${v/max*100}%"></i></div></div>`).join("")||"<p class='muted'>Pas encore de données.</p>";
-}
-function showView(id){document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));$(id).classList.add("active");document.querySelectorAll(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===id));window.scrollTo(0,0)}
-function toast(t){$("toast").textContent=t;$("toast").classList.add("show");setTimeout(()=>$("toast").classList.remove("show"),1800)}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
-
-document.querySelectorAll(".nav-btn").forEach(b=>b.onclick=()=>showView(b.dataset.view));
-$("navAdd").onclick=()=>showView("addView");
-$("addFromHome").onclick=$("addFromProducts").onclick=()=>showView("addView");
-$("seeAll").onclick=()=>{activeFilter="all";document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.filter==="all"));showView("productsView");renderProducts()};
-$("prevDay").onclick=()=>{selectedDate=addDays(selectedDate,-1);render()};
-$("nextDay").onclick=()=>{selectedDate=addDays(selectedDate,1);render()};
-document.querySelectorAll(".summary").forEach(b=>b.onclick=()=>{activeFilter=b.dataset.filter;showView("productsView");document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x.dataset.filter===activeFilter));renderProducts()});
-document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{activeFilter=b.dataset.filter;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));renderProducts()});
-$("search").oninput=renderProducts;
-$("productForm").onsubmit=e=>{
- e.preventDefault();
- const p={id:crypto.randomUUID(),name:$("name").value.trim(),quantity:+$("quantity").value,expiry:$("expiry").value,department:$("department").value,note:$("note").value.trim(),done:false};
- products.push(p);save();e.target.reset();$("quantity").value=1;toast("Produit ajouté ✓");showView("productsView");render();
-};
-$("productList").onclick=e=>{
- const done=e.target.closest("[data-done]"),del=e.target.closest("[data-delete]");
- if(done){const p=products.find(x=>x.id===done.dataset.done);p.done=!p.done;save();render();toast(p.done?"Produit marqué comme retiré":"Produit remis en attente")}
- if(del){products=products.filter(x=>x.id!==del.dataset.delete);save();render();toast("Produit supprimé")}
-};
-window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();window.installPrompt=e;$("installBtn").hidden=false});
-$("installBtn").onclick=async()=>{if(window.installPrompt){window.installPrompt.prompt();window.installPrompt=null}};
-if("serviceWorker"in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js"));
-render();
+const K='fraisProxiProducts';let data=JSON.parse(localStorage.getItem(K)||'[]'),filter='all';
+const $=x=>document.getElementById(x),iso=d=>{let x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
+const add=(d,n)=>{let x=new Date(d);x.setDate(x.getDate()+n);return x},fmt=d=>new Intl.DateTimeFormat('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(d));
+function monday(d=new Date()){let x=new Date(d),n=(x.getDay()+6)%7;x.setDate(x.getDate()-n);x.setHours(0,0,0,0);return x}
+function status(p){let t=iso(new Date()),tom=iso(add(new Date(),1)),e=p.dlc;if(e<=t)return['À retirer','danger'];if(e===tom)return['Demain','warn'];let end=add(monday(),6);return new Date(e)<=end?['Cette semaine','ok']:['À venir','ok']}
+function save(){localStorage.setItem(K,JSON.stringify(data))}
+function show(id){['home','add','products','stats'].forEach(x=>$(x).hidden=x!==id);if(id==='stats')renderStats()}
+function match(p){let s=status(p)[0];if(filter==='today')return s==='À retirer';if(filter==='tomorrow')return s==='Demain';if(filter==='week')return ['À retirer','Demain','Cette semaine'].includes(s);return true}
+function render(){let now=new Date();$('today').textContent=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long'}).format(now);$('week').textContent=`Semaine du ${fmt(monday())} au ${fmt(add(monday(),6))}`;
+let active=data.filter(p=>!p.done);$('cToday').textContent=active.filter(p=>status(p)[0]==='À retirer').reduce((a,p)=>a+p.qty,0);$('cTomorrow').textContent=active.filter(p=>status(p)[0]==='Demain').reduce((a,p)=>a+p.qty,0);$('cWeek').textContent=active.filter(p=>['À retirer','Demain','Cette semaine'].includes(status(p)[0])).reduce((a,p)=>a+p.qty,0);
+$('days').innerHTML=[0,1,2,3,4].map(i=>{let d=add(monday(),i),n=active.filter(p=>p.dlc===iso(d)).reduce((a,p)=>a+p.qty,0);return `<div class=day><b>${['Lun','Mar','Mer','Jeu','Ven'][i]}</b><span>${d.getDate()}</span><strong>${n}</strong></div>`}).join('');renderList()}
+function renderList(){let term=($('search')?.value||'').toLowerCase();let arr=data.filter(p=>match(p)&&p.name.toLowerCase().includes(term)).sort((a,b)=>a.dlc.localeCompare(b.dlc));$('list').innerHTML=arr.length?arr.map(p=>{let s=status(p);return `<div class=item><div class=info><b>${p.name} ×${p.qty}</b><small>${p.rayon} · DLC ${fmt(p.dlc)}${p.barcode?' · '+p.barcode:''}</small><span class="badge ${s[1]}">${p.done?'Retiré':s[0]}</span></div><button class=done onclick="done('${p.id}')">✓</button><button class=del onclick="del('${p.id}')">×</button></div>`}).join(''):'<p>Aucun produit.</p>'}
+function filterList(f){filter=f;show('products');renderList()}
+function done(id){let p=data.find(x=>x.id===id);p.done=!p.done;p.doneAt=p.done?new Date().toISOString():null;save();render()}
+function del(id){data=data.filter(x=>x.id!==id);save();render()}
+function renderStats(){let w=data.filter(p=>new Date(p.dlc)>=monday()&&new Date(p.dlc)<=add(monday(),7)),done=w.filter(p=>p.done).reduce((a,p)=>a+p.qty,0),pending=w.filter(p=>!p.done).reduce((a,p)=>a+p.qty,0);let by={};w.forEach(p=>by[p.rayon]=(by[p.rayon]||0)+p.qty);$('statsBox').innerHTML=`<div class="card green"><b>${done}</b><span>produits retirés</span></div><div class="card orange"><b>${pending}</b><span>en attente</span></div><h3>Répartition par rayon</h3>`+Object.entries(by).map(([k,v])=>`<div class=item><div class=info><b>${k}</b></div><strong>${v}</strong></div>`).join('')}
+$('form').onsubmit=e=>{e.preventDefault();data.push({id:Date.now().toString(36),name:$('name').value.trim(),barcode:$('barcode').value.trim(),qty:+$('qty').value,dlc:$('dlc').value,rayon:$('rayon').value,notes:$('notes').value.trim(),done:false});save();e.target.reset();$('qty').value=1;render();filterList('all')};render();
