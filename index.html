@@ -93,7 +93,7 @@
     <section id="scanView" class="view scan-view">
       <div class="dark-page-title"><button class="back light" data-view="homeView">‹</button><h1>Scanner le code-barres</h1></div>
       <div class="camera">
-        <div id="reader"></div>
+        <video id="reader" playsinline muted></video>
         <div class="camera-placeholder" id="cameraPlaceholder">
           <span>▥</span><b>Caméra</b><small>Autorisez l'accès à la caméra</small>
         </div>
@@ -172,7 +172,7 @@
 </dialog>
 
 <div class="toast" id="toast"></div>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script src="app.js?v=31"></script>
+<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
+<script src="app.js?v=32"></script>
 </body>
 </html>

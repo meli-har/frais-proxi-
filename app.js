@@ -1,7 +1,7 @@
 const KEY="fraisProxiProductsV3", STORE="fraisProxiStoreV3", STARTED="fraisProxiStartedV3";
 let products=JSON.parse(localStorage.getItem(KEY)||"[]");
 let selectedDate=new Date();selectedDate.setHours(0,0,0,0);
-let activeFilter="all", dailyMode="today", html5QrCode=null, scannerRunning=false;
+let activeFilter="all", dailyMode="today", codeReader=null, scannerRunning=false;
 const $=id=>document.getElementById(id), $$=s=>[...document.querySelectorAll(s)];
 const toISO=d=>{const x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
 const addDays=(d,n)=>{const x=new Date(d);x.setDate(x.getDate()+n);return x};
@@ -84,46 +84,60 @@ function renderStats(){
 async function startCamera(){
   $("cameraPlaceholder").style.display="flex";
   try{
-    if(typeof Html5Qrcode==="undefined") throw new Error("Scanner indisponible");
-    html5QrCode = html5QrCode || new Html5Qrcode("reader");
-    const config = {
-      fps: 10,
-      qrbox: {width: 280, height: 130},
-      aspectRatio: 1.5,
-      formatsToSupport: [
-        Html5QrcodeSupportedFormats.EAN_13,
-        Html5QrcodeSupportedFormats.EAN_8,
-        Html5QrcodeSupportedFormats.UPC_A,
-        Html5QrcodeSupportedFormats.UPC_E,
-        Html5QrcodeSupportedFormats.CODE_128,
-        Html5QrcodeSupportedFormats.CODE_39
-      ]
-    };
-    await html5QrCode.start(
-      { facingMode: "environment" },
-      config,
-      decodedText => {
-        $("barcode").value = decodedText;
-        toast("Code détecté : " + decodedText);
-        stopCamera().then(()=>showView("addView"));
-      },
-      ()=>{}
-    );
-    scannerRunning=true;
+    if(!window.ZXing) throw new Error("Scanner indisponible");
+    const hints = new Map();
+    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+      ZXing.BarcodeFormat.EAN_13,
+      ZXing.BarcodeFormat.EAN_8,
+      ZXing.BarcodeFormat.UPC_A,
+      ZXing.BarcodeFormat.UPC_E,
+      ZXing.BarcodeFormat.CODE_128,
+      ZXing.BarcodeFormat.CODE_39,
+      ZXing.BarcodeFormat.ITF,
+      ZXing.BarcodeFormat.CODABAR
+    ]);
+    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+    codeReader = new ZXing.BrowserMultiFormatReader(hints, 300);
+    scannerRunning = true;
     $("cameraPlaceholder").style.display="none";
+
+    await codeReader.decodeFromConstraints(
+      {
+        audio: false,
+        video: {
+          facingMode: { ideal: "environment" },
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      },
+      "reader",
+      (result, err) => {
+        if(result && scannerRunning){
+          const code = result.getText();
+          $("barcode").value = code;
+          toast("Code détecté : " + code);
+          stopCamera();
+          showView("addView");
+        }
+      }
+    );
   }catch(e){
+    scannerRunning=false;
     $("cameraPlaceholder").style.display="flex";
-    toast("Impossible d'ouvrir la caméra. Vérifie l'autorisation caméra.");
+    toast("Impossible d'ouvrir le scanner. Vérifie l'autorisation caméra.");
   }
 }
-async function stopCamera(){
-  try{
-    if(html5QrCode && scannerRunning){
-      await html5QrCode.stop();
-      await html5QrCode.clear();
-    }
-  }catch(e){}
+function stopCamera(){
   scannerRunning=false;
+  try{
+    if(codeReader) codeReader.reset();
+  }catch(e){}
+  codeReader=null;
+  const v=$("reader");
+  if(v && v.srcObject){
+    try{ v.srcObject.getTracks().forEach(t=>t.stop()); }catch(e){}
+    v.srcObject=null;
+  }
 }
 function handleListClick(e){
   const d=e.target.closest("[data-done]"),x=e.target.closest("[data-delete]");
