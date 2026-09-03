@@ -3,7 +3,7 @@ const SUPABASE_KEY = 'sb_publishable_ASbg_BcoGRlcJLwsFX7utw_4hTFpBmp';
 const db = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const KS='fpV4store', KC='fpV4code', KD='fpV4departments', KN='fpV4notifications', KM='fpV43magasinId';
-let products=[], scanner=false, last='', dailyMode='today', filter='all', magasinId=localStorage.getItem(KM)||null, syncTimer=null;
+let products=[], catalogue=[], scanner=false, last='', dailyMode='today', filter='all', magasinId=localStorage.getItem(KM)||null, syncTimer=null;
 const $=x=>document.getElementById(x), $$=s=>[...document.querySelectorAll(s)];
 const iso=d=>{let x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
 const add=(d,n)=>{let x=new Date(d);x.setDate(x.getDate()+n);return x};
@@ -136,7 +136,7 @@ function show(id){
   if(id==='scanView')setTimeout(startScan,200);
   if(id==='storeSettingsView'){$('storePageInput').value='Proxi - Monéteau';$('storeCodeInput').value=localStorage.getItem(KC)||'582941'}
   if(id==='employeesView')$('codeDisplayPage').textContent=localStorage.getItem(KC)||'582941';
-  if(id==='departmentsView')renderDepartments();if(id==='notificationsView')loadNotifications();render();
+  if(id==='departmentsView')renderDepartments();if(id==='notificationsView')loadNotifications();if(id==='catalogueView')loadCatalogue();render();
 }
 function productHTML(p,check=false){let[s,c]=status(p);return `<div class="product"><div class="picon">${icon(p.department)}</div><div class="pinfo"><b>${esc(p.name)}</b><span class="badge ${c}">${s}</span><small>${fmt(p.expiry)} · ♧ ${esc(p.department)}</small></div><span class="qtyText">${p.quantity>1?'x'+p.quantity:''}</span>${check?`<button class="check ${p.done?'done':''}" data-done="${p.id}">${p.done?'✓':''}</button>`:'›'}</div>`}
 function render(){
@@ -152,6 +152,27 @@ function renderStats(){
   let groups={};products.forEach(p=>groups[p.department]=(groups[p.department]||0)+(+p.quantity||1));let max=Math.max(1,...Object.values(groups));$('departmentStats').innerHTML=Object.entries(groups).map(([k,v])=>`<div class="barRow"><div class="barTop"><span>${k}</span><b>${v}</b></div><div class="bar"><i style="width:${v/max*100}%"></i></div></div>`).join('')||'<small>Aucune donnée.</small>';
   $('history').innerHTML=removed.slice(-5).reverse().map(p=>`<div class="hist"><span>🔴 ${p.doneAt?fmt(p.doneAt):'Retiré'}</span><b>${p.quantity} produit(s)</b></div>`).join('')||'<small>Aucun retrait.</small>';
 }
+
+async function loadCatalogue(){
+  if(!db||!magasinId)return;
+  const {data,error}=await db.from('catalogue_produits').select('*').eq('magasin_id',magasinId).order('nom',{ascending:true});
+  if(error){console.error(error);toast('Catalogue indisponible');return}
+  catalogue=data||[];renderCatalogue();
+}
+function renderCatalogue(){
+  if(!$('catalogueList'))return;
+  const q=($('catalogueSearch')?.value||'').trim().toLowerCase();
+  const rows=catalogue.filter(x=>(x.nom||'').toLowerCase().includes(q)||(x.code_barres||'').includes(q));
+  $('catalogueCount').textContent=catalogue.length;
+  $('catalogueList').innerHTML=rows.length?rows.map(x=>`<button class="catalogueItem" data-cat-id="${x.id}"><span class="eanIcon">▥</span><span class="catInfo"><b>${esc(x.nom)}</b><small>EAN ${esc(x.code_barres)}${x.rayon?' · '+esc(x.rayon):''}</small></span><span class="chev">›</span></button>`).join(''):'<div class="card emptyCatalogue"><strong>Aucune référence trouvée</strong><span>Ajoutez un EAN pour qu’il soit reconnu au scan.</span></div>';
+}
+function fillCatalogueDepartments(selected=''){
+  const sel=$('catalogueDepartment');if(!sel)return;const deps=getDepartments();sel.innerHTML='<option value="">Non renseigné</option>'+deps.map(x=>`<option>${esc(x)}</option>`).join('');if(selected)sel.value=selected;
+}
+function openCatalogueEditor(row=null){
+  $('catalogueId').value=row?.id||'';$('catalogueBarcode').value=row?.code_barres||'';$('catalogueName').value=row?.nom||'';$('catalogueNotes').value=row?.notes||'';fillCatalogueDepartments(row?.rayon||'');$('catalogueEditTitle').textContent=row?'Modifier la référence':'Ajouter une référence';$('deleteCatalogueBtn').classList.toggle('hidden',!row);show('catalogueEditView');
+}
+
 function startScan(){
   if(scanner||!window.Quagga){$('scanStatus').textContent='Scanner indisponible. Utilisez la saisie manuelle.';return}
   $('scanStatus').textContent='Placez le code-barres bien droit dans le cadre.';
@@ -170,7 +191,7 @@ document.addEventListener('click',async e=>{let b=e.target.closest('[data-done]'
 $('doneAll').onclick=async()=>{let a=arr(dailyMode);try{for(const p of a)await setDoneRemote(p.id,true);toast('Tout est retiré');openDaily(dailyMode)}catch(e){toast('Une erreur est survenue')}};
 $('manualBarcodeBtn').onclick=()=>{let c=prompt('Numéro sous le code-barres :');if(c){stopScan();identifyBarcode(c.trim())}};
 $('teamBtn').onclick=()=>show('employeesView');$('menuBtn').onclick=()=>show('settingsView');
-$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v4.4.json';a.click()};
+$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v5.json';a.click()};
 function getDepartments(){try{return JSON.parse(localStorage.getItem(KD)||'null')||['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}catch(e){return['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}}
 function saveDepartments(a){localStorage.setItem(KD,JSON.stringify(a));refreshDepartmentSelect()}
 function refreshDepartmentSelect(){let a=getDepartments(),sel=$('department'),cur=sel.value;sel.innerHTML=a.map(x=>`<option>${esc(x)}</option>`).join('');if(a.includes(cur))sel.value=cur}
@@ -181,7 +202,15 @@ $('addDepartment').onclick=()=>{let v=$('newDepartment').value.trim();if(!v)retu
 document.addEventListener('click',e=>{let b=e.target.closest('[data-del-dep]');if(!b)return;let a=getDepartments();if(a.length<=1)return toast('Gardez au moins un rayon');a.splice(+b.dataset.delDep,1);saveDepartments(a);renderDepartments();toast('Rayon supprimé')});
 $('saveNotifications').onclick=()=>{localStorage.setItem(KN,JSON.stringify({today:$('notifToday').checked,tomorrow:$('notifTomorrow').checked}));toast('Notifications enregistrées')};
 $('importFile').onchange=e=>{toast('Import local désactivé avec la synchronisation en ligne')};
-refreshDepartmentSelect();$('expiry').value=iso(today());render();
+
+$('catalogueSearch').oninput=renderCatalogue;
+$('refreshCatalogue').onclick=()=>loadCatalogue();
+$('newCatalogueBtn').onclick=()=>openCatalogueEditor();
+document.addEventListener('click',e=>{const b=e.target.closest('[data-cat-id]');if(!b)return;const row=catalogue.find(x=>String(x.id)===String(b.dataset.catId));if(row)openCatalogueEditor(row)});
+$('catalogueForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');const id=$('catalogueId').value;const payload={magasin_id:+magasinId,code_barres:$('catalogueBarcode').value.trim(),nom:$('catalogueName').value.trim(),rayon:$('catalogueDepartment').value||null,notes:$('catalogueNotes').value.trim()||null,source:'magasin',updated_at:new Date().toISOString()};let res=id?await db.from('catalogue_produits').update(payload).eq('id',id).eq('magasin_id',magasinId):await db.from('catalogue_produits').upsert(payload,{onConflict:'magasin_id,code_barres'});if(res.error){console.error(res.error);return toast('Impossible d’enregistrer')}toast('Référence enregistrée');await loadCatalogue();show('catalogueView')};
+$('deleteCatalogueBtn').onclick=async()=>{const id=$('catalogueId').value;if(!id)return;if(!confirm('Supprimer cette référence du catalogue ?'))return;const {error}=await db.from('catalogue_produits').delete().eq('id',id).eq('magasin_id',magasinId);if(error)return toast('Suppression impossible');toast('Référence supprimée');await loadCatalogue();show('catalogueView')};
+
+refreshDepartmentSelect();fillCatalogueDepartments();$('expiry').value=iso(today());render();
 window.addEventListener('focus',()=>loadProducts(true));window.addEventListener('beforeunload',stopScan);
 
 (async()=>{
