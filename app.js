@@ -164,7 +164,7 @@ function renderCatalogue(){
   const q=($('catalogueSearch')?.value||'').trim().toLowerCase();
   const rows=catalogue.filter(x=>(x.nom||'').toLowerCase().includes(q)||(x.code_barres||'').includes(q));
   $('catalogueCount').textContent=catalogue.length;
-  $('catalogueList').innerHTML=rows.length?rows.map(x=>`<button class="catalogueItem" data-cat-id="${x.id}"><span class="eanIcon">▥</span><span class="catInfo"><b>${esc(x.nom)}</b><small>EAN ${esc(x.code_barres)}${x.rayon?' · '+esc(x.rayon):''}</small></span><span class="chev">›</span></button>`).join(''):'<div class="card emptyCatalogue"><strong>Aucune référence trouvée</strong><span>Ajoutez un EAN pour qu’il soit reconnu au scan.</span></div>';
+  $('catalogueList').innerHTML=rows.length?rows.map(x=>`<button class="catalogueItem" data-cat-id="${x.id}"><span class="eanIcon"><svg class="eanSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v14M7 5v14M10 5v14M14 5v14M17 5v14M20 5v14"/></svg></span><span class="catInfo"><b>${esc(x.nom)}</b><small>EAN ${esc(x.code_barres)}${x.rayon?' · '+esc(x.rayon):''}</small></span><span class="chev">›</span></button>`).join(''):'<div class="card emptyCatalogue"><strong>Aucune référence trouvée</strong><span>Ajoutez un EAN pour qu’il soit reconnu au scan.</span></div>';
 }
 function fillCatalogueDepartments(selected=''){
   const sel=$('catalogueDepartment');if(!sel)return;const deps=getDepartments();sel.innerHTML='<option value="">Non renseigné</option>'+deps.map(x=>`<option>${esc(x)}</option>`).join('');if(selected)sel.value=selected;
