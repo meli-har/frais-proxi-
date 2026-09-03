@@ -191,16 +191,16 @@ document.addEventListener('click',async e=>{let b=e.target.closest('[data-done]'
 $('doneAll').onclick=async()=>{let a=arr(dailyMode);try{for(const p of a)await setDoneRemote(p.id,true);toast('Tout est retiré');openDaily(dailyMode)}catch(e){toast('Une erreur est survenue')}};
 $('manualBarcodeBtn').onclick=()=>{let c=prompt('Numéro sous le code-barres :');if(c){stopScan();identifyBarcode(c.trim())}};
 $('teamBtn').onclick=()=>show('employeesView');$('menuBtn').onclick=()=>show('settingsView');
-$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v5.json';a.click()};
+$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v5.2.json';a.click()};
 function getDepartments(){try{return JSON.parse(localStorage.getItem(KD)||'null')||['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}catch(e){return['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}}
 function saveDepartments(a){localStorage.setItem(KD,JSON.stringify(a));refreshDepartmentSelect()}
 function refreshDepartmentSelect(){let a=getDepartments(),sel=$('department'),cur=sel.value;sel.innerHTML=a.map(x=>`<option>${esc(x)}</option>`).join('');if(a.includes(cur))sel.value=cur}
 function renderDepartments(){let a=getDepartments();$('departmentList').innerHTML=a.map((x,i)=>`<div class="departmentRow"><span>${esc(x)}</span><button data-del-dep="${i}" aria-label="Supprimer">×</button></div>`).join('')}
-function loadNotifications(){let n={today:true,tomorrow:true};try{n={...n,...JSON.parse(localStorage.getItem(KN)||'{}')}}catch(e){}$('notifToday').checked=n.today;$('notifTomorrow').checked=n.tomorrow}
+function loadNotifications(){let n={today:true,tomorrow:true,days:1};try{n={...n,...JSON.parse(localStorage.getItem(KN)||'{}')}}catch(e){}$('notifToday').checked=n.today;$('notifTomorrow').checked=n.tomorrow;if($('notifDays'))$('notifDays').value=String(n.days||1)}
 $('saveStorePage').onclick=()=>{localStorage.setItem(KS,'Proxi - Monéteau');let code=$('storeCodeInput').value.trim();if(code)localStorage.setItem(KC,code);render();toast('Informations enregistrées')};
 $('addDepartment').onclick=()=>{let v=$('newDepartment').value.trim();if(!v)return;let a=getDepartments();if(!a.some(x=>x.toLowerCase()===v.toLowerCase()))a.push(v);saveDepartments(a);$('newDepartment').value='';renderDepartments();toast('Rayon ajouté')};
 document.addEventListener('click',e=>{let b=e.target.closest('[data-del-dep]');if(!b)return;let a=getDepartments();if(a.length<=1)return toast('Gardez au moins un rayon');a.splice(+b.dataset.delDep,1);saveDepartments(a);renderDepartments();toast('Rayon supprimé')});
-$('saveNotifications').onclick=()=>{localStorage.setItem(KN,JSON.stringify({today:$('notifToday').checked,tomorrow:$('notifTomorrow').checked}));toast('Notifications enregistrées')};
+$('saveNotifications').onclick=()=>{localStorage.setItem(KN,JSON.stringify({today:$('notifToday').checked,tomorrow:$('notifTomorrow').checked,days:+($('notifDays')?.value||1)}));toast('Notifications enregistrées')};
 $('importFile').onchange=e=>{toast('Import local désactivé avec la synchronisation en ligne')};
 
 $('catalogueSearch').oninput=renderCatalogue;
