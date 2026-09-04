@@ -2,8 +2,8 @@ const SUPABASE_URL = 'https://sbimesnrwrxgkqkfhiaz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ASbg_BcoGRlcJLwsFX7utw_4hTFpBmp';
 const db = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const KS='fpV4store', KC='fpV4code', KD='fpV4departments', KN='fpV4notifications', KM='fpV43magasinId';
-let products=[], catalogue=[], scanner=false, last='', dailyMode='today', filter='all', magasinId=localStorage.getItem(KM)||null, syncTimer=null;
+const KS='fpV4store', KC='fpV4code', KD='fpV4departments', KN='fpV4notifications', KM='fpV43magasinId', KP='fpV54products', KQ='fpV54queue';
+let products=JSON.parse(localStorage.getItem(KP)||'[]'), catalogue=[], departments=['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie'], employees=[], currentAccess=null, scanner=false, last='', dailyMode='today', filter='all', magasinId=localStorage.getItem(KM)||null, syncTimer=null;
 const $=x=>document.getElementById(x), $$=s=>[...document.querySelectorAll(s)];
 const iso=d=>{let x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
 const add=(d,n)=>{let x=new Date(d);x.setDate(x.getDate()+n);return x};
@@ -20,6 +20,9 @@ function arr(mode){let t=iso(today()),tm=iso(add(today(),1));return products.fil
 function qty(a){return a.reduce((n,p)=>n+(+p.quantity||1),0)}
 
 function mapRow(r){return {id:r.id,name:r.nom,barcode:r.code_barres||'',quantity:r.quantite||1,expiry:r.dlc,department:r.rayon||'Frais',note:r.notes||'',done:!!r.retire,doneAt:r.retire_at||null}}
+function saveLocal(){localStorage.setItem(KP,JSON.stringify(products))}
+function queue(op){let q=JSON.parse(localStorage.getItem(KQ)||'[]');q.push(op);localStorage.setItem(KQ,JSON.stringify(q))}
+async function flushQueue(){if(!navigator.onLine||!db||!magasinId)return;let q=JSON.parse(localStorage.getItem(KQ)||'[]'),left=[];for(const op of q){try{if(op.type==='insert')await addProductRemote(op.p,true);else if(op.type==='delete'){let {error}=await db.from('produits').delete().eq('id',op.id).eq('magasin_id',magasinId);if(error)throw error}else if(op.type==='update'){let {error}=await db.from('produits').update(op.payload).eq('id',op.id).eq('magasin_id',magasinId);if(error)throw error}}catch(e){left.push(op)}}localStorage.setItem(KQ,JSON.stringify(left));if(!left.length)await loadProducts(true)}
 async function ensureAnonSession(){
   if(!db) throw new Error('Supabase indisponible');
   const current=await db.auth.getSession();
@@ -34,6 +37,44 @@ async function ensureAnonSession(){
   throw lastError;
 }
 function deviceLabel(){let ua=navigator.userAgent||''; if(/iPhone/i.test(ua))return 'iPhone'; if(/iPad/i.test(ua))return 'iPad'; if(/Android/i.test(ua))return 'Android'; return 'Téléphone'}
+function isAdmin(){return currentAccess?.role==='admin'&&currentAccess?.actif!==false}
+async function loadMyAccess(){
+  if(!db||!magasinId)return null;
+  const {data:{session}}=await db.auth.getSession();
+  if(!session)return null;
+  const {data,error}=await db.from('acces_magasin').select('*').eq('magasin_id',magasinId).eq('user_id',session.user.id).maybeSingle();
+  if(error){console.warn('Accès:',error);return null}
+  currentAccess=data||null;applyRoleUI();return currentAccess;
+}
+function applyRoleUI(){
+  const admin=isAdmin();
+  const pill=$('currentRolePill');if(pill)pill.textContent=admin?'Administrateur':'Employé';
+  $$('[data-admin-only="true"]').forEach(x=>x.classList.toggle('adminHidden',!admin));
+  if($('storeCodeCard'))$('storeCodeCard').classList.toggle('adminHidden',!admin);
+}
+async function loadEmployees(){
+  if(!db||!magasinId)return;
+  const {data,error}=await db.from('acces_magasin').select('*').eq('magasin_id',magasinId);
+  if(error){console.error(error);toast('Accès équipe indisponibles');return}
+  employees=data||[];renderEmployees();
+}
+function renderEmployees(){
+  if(!$('employeeList'))return;
+  const admin=isAdmin();
+  $('employeeCount').textContent=String(employees.filter(x=>x.actif!==false).length);
+  $('employeeList').innerHTML=employees.length?employees.map(x=>{
+    const label=x.nom_affichage||x.appareil||'Appareil';
+    const role=x.role==='admin'?'Administrateur':'Employé';
+    const active=x.actif!==false;
+    return `<div class="employeeManageRow ${active?'':'disabled'}"><span class="avatarCircle"><svg class="settingsIcon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><div class="employeeMeta"><b>${esc(label)}</b><small>${active?'Accès actif':'Accès désactivé'}</small></div><span class="rolePill small">${role}</span>${admin?`<button class="employeeAction" data-employee-role="${esc(x.user_id)}" data-current-role="${esc(x.role||'employe')}" title="Changer le rôle">⇄</button><button class="employeeAction" data-employee-active="${esc(x.user_id)}" data-current-active="${active?'1':'0'}" title="Activer ou désactiver">${active?'⊘':'✓'}</button>`:''}</div>`
+  }).join(''):'<p class="muted">Aucun accès trouvé.</p>';
+}
+async function loadDepartmentsRemote(){
+  if(!db||!magasinId){refreshDepartmentSelect();return}
+  const {data,error}=await db.from('rayons').select('*').eq('magasin_id',magasinId).eq('actif',true).order('position',{ascending:true}).order('nom',{ascending:true});
+  if(!error&&data?.length)departments=data.map(x=>x.nom);
+  refreshDepartmentSelect();fillCatalogueDepartments();
+}
 async function connectStore(code){
   setSync('Connexion…');
   await ensureAnonSession();
@@ -41,6 +82,9 @@ async function connectStore(code){
   if(error) throw error;
   magasinId=String(data);
   localStorage.setItem(KM,magasinId);localStorage.setItem(KC,code);localStorage.setItem(KS,'Proxi - Monéteau');
+  await loadMyAccess();
+  if(currentAccess?.actif===false) throw new Error('Cet accès a été désactivé par un administrateur');
+  await loadDepartmentsRemote();
   await loadProducts();
   setSync('Connecté à Proxi - Monéteau',true);
   startSyncTimer();
@@ -48,14 +92,14 @@ async function connectStore(code){
 async function loadProducts(silent=false){
   if(!db||!magasinId)return;
   const {data,error}=await db.from('produits').select('*').eq('magasin_id',magasinId).order('dlc',{ascending:true}).order('created_at',{ascending:true});
-  if(error){if(!silent)toast('Synchronisation impossible');console.error(error);return}
-  products=(data||[]).map(mapRow);render();
+  if(error){if(!silent)toast('Mode hors ligne : données du téléphone');console.error(error);render();return}
+  products=(data||[]).map(mapRow);saveLocal();render();
 }
 function startSyncTimer(){if(syncTimer)clearInterval(syncTimer);syncTimer=setInterval(()=>loadProducts(true),8000)}
-async function addProductRemote(p){
-  const {error}=await db.from('produits').insert({magasin_id:+magasinId,nom:p.name,code_barres:p.barcode||null,quantite:p.quantity,dlc:p.expiry,rayon:p.department,notes:p.note||null,retire:false});
-  if(error)throw error; await loadProducts(true);
-}
+async function addProductRemote(p,noReload=false){const {error}=await db.from('produits').insert({magasin_id:+magasinId,nom:p.name,code_barres:p.barcode||null,quantite:p.quantity,dlc:p.expiry,rayon:p.department,notes:p.note||null,retire:false});if(error)throw error;if(!noReload)await loadProducts(true)}
+async function addProductSmart(p){if(navigator.onLine){try{return await addProductRemote(p)}catch(e){}}const temp={...p,id:'local-'+Date.now(),done:false,doneAt:null};products.push(temp);saveLocal();queue({type:'insert',p});render();toast('Ajouté hors ligne — synchronisation à venir')}
+async function deleteProductSmart(p){if(!confirm('Supprimer cette DLC saisie ?'))return;if(String(p.id).startsWith('local-')){products=products.filter(x=>x.id!==p.id)}else if(navigator.onLine){const {error}=await db.from('produits').delete().eq('id',p.id).eq('magasin_id',magasinId);if(error){queue({type:'delete',id:p.id});products=products.filter(x=>x.id!==p.id)}else await loadProducts(true)}else{queue({type:'delete',id:p.id});products=products.filter(x=>x.id!==p.id)}saveLocal();render();toast('DLC supprimée')}
+function addAnotherDate(p){$('name').value=p.name;$('barcode').value=p.barcode||'';$('department').value=p.department;$('note').value=p.note||'';$('quantity').value=1;$('expiry').value=iso(today());show('addView');toast('Choisissez la nouvelle DLC')}
 
 async function findCatalogueProduct(code){
   if(!db||!magasinId||!code)return null;
@@ -132,13 +176,15 @@ async function setDoneRemote(id,done){
 }
 
 function show(id){
+  const adminViews=['storeSettingsView','employeesView','catalogueView','catalogueEditView','departmentsView','backupView'];
+  if(adminViews.includes(id)&&!isAdmin()){toast('Réservé à l’administrateur');id='settingsView'}
   stopScan();$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.view===id));
   if(id==='scanView')setTimeout(startScan,200);
   if(id==='storeSettingsView'){$('storePageInput').value='Proxi - Monéteau';$('storeCodeInput').value=localStorage.getItem(KC)||'582941'}
-  if(id==='employeesView')$('codeDisplayPage').textContent=localStorage.getItem(KC)||'582941';
-  if(id==='departmentsView')renderDepartments();if(id==='notificationsView')loadNotifications();if(id==='catalogueView')loadCatalogue();render();
+  if(id==='employeesView'){$('codeDisplayPage').textContent=localStorage.getItem(KC)||'582941';loadEmployees()}
+  if(id==='departmentsView')loadDepartmentsRemote().then(renderDepartments);if(id==='notificationsView')loadNotifications();if(id==='catalogueView')loadCatalogue();applyRoleUI();render();
 }
-function productHTML(p,check=false){let[s,c]=status(p);return `<div class="product"><div class="picon">${icon(p.department)}</div><div class="pinfo"><b>${esc(p.name)}</b><span class="badge ${c}">${s}</span><small>${fmt(p.expiry)} · ♧ ${esc(p.department)}</small></div><span class="qtyText">${p.quantity>1?'x'+p.quantity:''}</span>${check?`<button class="check ${p.done?'done':''}" data-done="${p.id}">${p.done?'✓':''}</button>`:'›'}</div>`}
+function productHTML(p,check=false){let[s,c]=status(p);return `<div class="product"><div class="picon">${icon(p.department)}</div><div class="pinfo"><b>${esc(p.name)}</b><span class="badge ${c}">${s}</span><small>${fmt(p.expiry)} · ${esc(p.department)}</small><div class="productActions"><button data-add-date="${p.id}">＋ DLC</button><button data-delete-product="${p.id}">Supprimer</button></div></div><span class="qtyText">${p.quantity>1?'x'+p.quantity:''}</span>${check?`<button class="check ${p.done?'done':''}" data-done="${p.id}">${p.done?'✓':''}</button>`:''}</div>`}
 function render(){
   let t=today();if($('currentDate'))$('currentDate').textContent=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(t);
   if($('todayCount'))$('todayCount').textContent=qty(arr('today'));if($('tomorrowCount'))$('tomorrowCount').textContent=qty(arr('tomorrow'));if($('weekCount'))$('weekCount').textContent=qty(arr('week'));
@@ -185,24 +231,49 @@ function stopScan(){if(scanner&&window.Quagga){try{Quagga.stop()}catch(e){}scann
 $('startBtn').onclick=()=>{$('welcome').classList.add('hidden');$('login').classList.remove('hidden');$('shopCode').value=localStorage.getItem(KC)||'582941'};
 $('loginBtn').onclick=async()=>{let c=$('shopCode').value.trim();if(c.length<4)return toast('Entrez le code magasin');$('loginBtn').disabled=true;try{await connectStore(c);$('login').classList.add('hidden');$('app').classList.remove('hidden');render();toast('Magasin connecté')}catch(e){console.error('Connexion Frais Proxi:',e);const msg=(e?.message||'Connexion impossible').trim();setSync(msg);if(/anonymous sign-ins are disabled/i.test(msg))toast('Connexion anonyme non encore active côté Supabase');else if(/invalid|code magasin|incorrect/i.test(msg))toast('Code magasin incorrect');else toast('Connexion impossible : '+msg.slice(0,80))}finally{$('loginBtn').disabled=false}};
 $$('[data-view]').forEach(b=>b.onclick=()=>show(b.dataset.view));$$('[data-daily]').forEach(b=>b.onclick=()=>openDaily(b.dataset.daily));$('addBtn').onclick=()=>show('addView');$('scanTab').onclick=()=>show('scanView');$('minus').onclick=()=>{$('quantity').value=Math.max(1,+$('quantity').value-1)};$('plusQty').onclick=()=>{$('quantity').value=+$('quantity').value+1};
-$('productForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');let p={name:$('name').value.trim(),quantity:+$('quantity').value,expiry:$('expiry').value,department:$('department').value,note:$('note').value.trim(),barcode:$('barcode').value};try{await addProductRemote(p);await rememberCatalogueProduct(p);e.target.reset();$('quantity').value=1;$('expiry').value=iso(today());toast('Produit ajouté et mémorisé');show('homeView')}catch(err){console.error(err);toast('Impossible d’ajouter le produit')}};
+$('productForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');let p={name:$('name').value.trim(),quantity:+$('quantity').value,expiry:$('expiry').value,department:$('department').value,note:$('note').value.trim(),barcode:$('barcode').value};try{await addProductSmart(p);if(navigator.onLine)await rememberCatalogueProduct(p);e.target.reset();$('quantity').value=1;$('expiry').value=iso(today());toast('Produit ajouté et mémorisé');show('homeView')}catch(err){console.error(err);toast('Impossible d’ajouter le produit')}};
 $('search').oninput=render;$$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;$$('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()});
+document.addEventListener('click',async e=>{let a=e.target.closest('[data-add-date]');if(a){let p=products.find(x=>String(x.id)===String(a.dataset.addDate));if(p)addAnotherDate(p);return}let d=e.target.closest('[data-delete-product]');if(d){let p=products.find(x=>String(x.id)===String(d.dataset.deleteProduct));if(p)await deleteProductSmart(p);return}});
 document.addEventListener('click',async e=>{let b=e.target.closest('[data-done]');if(!b)return;let p=products.find(x=>x.id==b.dataset.done);if(!p)return;try{await setDoneRemote(p.id,!p.done);openDaily(dailyMode);toast(p.done?'Produit remis en attente':'Produit retiré')}catch(err){console.error(err);toast('Modification impossible')}});
 $('doneAll').onclick=async()=>{let a=arr(dailyMode);try{for(const p of a)await setDoneRemote(p.id,true);toast('Tout est retiré');openDaily(dailyMode)}catch(e){toast('Une erreur est survenue')}};
 $('manualBarcodeBtn').onclick=()=>{let c=prompt('Numéro sous le code-barres :');if(c){stopScan();identifyBarcode(c.trim())}};
 $('teamBtn').onclick=()=>show('employeesView');$('menuBtn').onclick=()=>show('settingsView');
-$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v5.2.json';a.click()};
-function getDepartments(){try{return JSON.parse(localStorage.getItem(KD)||'null')||['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}catch(e){return['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}}
-function saveDepartments(a){localStorage.setItem(KD,JSON.stringify(a));refreshDepartmentSelect()}
+$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v5.4.json';a.click()};
+function getDepartments(){return departments.length?departments:['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}
 function refreshDepartmentSelect(){let a=getDepartments(),sel=$('department'),cur=sel.value;sel.innerHTML=a.map(x=>`<option>${esc(x)}</option>`).join('');if(a.includes(cur))sel.value=cur}
-function renderDepartments(){let a=getDepartments();$('departmentList').innerHTML=a.map((x,i)=>`<div class="departmentRow"><span>${esc(x)}</span><button data-del-dep="${i}" aria-label="Supprimer">×</button></div>`).join('')}
+async function renderDepartments(){
+  if(!db||!magasinId)return;
+  const {data,error}=await db.from('rayons').select('*').eq('magasin_id',magasinId).order('position',{ascending:true}).order('nom',{ascending:true});
+  if(error){toast('Rayons indisponibles');return}
+  const rows=data||[];
+  $('departmentList').innerHTML=rows.map(x=>`<div class="departmentRow"><span>${esc(x.nom)}</span><button data-del-dep="${x.id}" aria-label="Supprimer">×</button></div>`).join('');
+}
 function loadNotifications(){let n={today:true,tomorrow:true,days:1};try{n={...n,...JSON.parse(localStorage.getItem(KN)||'{}')}}catch(e){}$('notifToday').checked=n.today;$('notifTomorrow').checked=n.tomorrow;if($('notifDays'))$('notifDays').value=String(n.days||1)}
 $('saveStorePage').onclick=()=>{localStorage.setItem(KS,'Proxi - Monéteau');let code=$('storeCodeInput').value.trim();if(code)localStorage.setItem(KC,code);render();toast('Informations enregistrées')};
-$('addDepartment').onclick=()=>{let v=$('newDepartment').value.trim();if(!v)return;let a=getDepartments();if(!a.some(x=>x.toLowerCase()===v.toLowerCase()))a.push(v);saveDepartments(a);$('newDepartment').value='';renderDepartments();toast('Rayon ajouté')};
-document.addEventListener('click',e=>{let b=e.target.closest('[data-del-dep]');if(!b)return;let a=getDepartments();if(a.length<=1)return toast('Gardez au moins un rayon');a.splice(+b.dataset.delDep,1);saveDepartments(a);renderDepartments();toast('Rayon supprimé')});
+$('addDepartment').onclick=async()=>{if(!isAdmin())return toast('Réservé à l’administrateur');let v=$('newDepartment').value.trim();if(!v)return;const {error}=await db.from('rayons').insert({magasin_id:+magasinId,nom:v,position:getDepartments().length+1,actif:true});if(error){console.error(error);return toast('Impossible d’ajouter ce rayon')}$('newDepartment').value='';await loadDepartmentsRemote();await renderDepartments();toast('Rayon ajouté')};
+document.addEventListener('click',async e=>{let b=e.target.closest('[data-del-dep]');if(!b)return;if(!isAdmin())return toast('Réservé à l’administrateur');if(!confirm('Supprimer ce rayon ?'))return;const {error}=await db.from('rayons').delete().eq('id',b.dataset.delDep).eq('magasin_id',magasinId);if(error)return toast('Suppression impossible');await loadDepartmentsRemote();await renderDepartments();toast('Rayon supprimé')});
 $('saveNotifications').onclick=()=>{localStorage.setItem(KN,JSON.stringify({today:$('notifToday').checked,tomorrow:$('notifTomorrow').checked,days:+($('notifDays')?.value||1)}));toast('Notifications enregistrées')};
 $('importFile').onchange=e=>{toast('Import local désactivé avec la synchronisation en ligne')};
 
+$('refreshEmployees').onclick=()=>loadEmployees();
+document.addEventListener('click',async e=>{
+  const roleBtn=e.target.closest('[data-employee-role]');
+  if(roleBtn){
+    if(!isAdmin())return toast('Réservé à l’administrateur');
+    const uid=roleBtn.dataset.employeeRole, next=roleBtn.dataset.currentRole==='admin'?'employe':'admin';
+    const {error}=await db.from('acces_magasin').update({role:next,updated_at:new Date().toISOString()}).eq('magasin_id',magasinId).eq('user_id',uid);
+    if(error)return toast('Modification impossible');await loadEmployees();await loadMyAccess();toast('Rôle modifié');return;
+  }
+  const activeBtn=e.target.closest('[data-employee-active]');
+  if(activeBtn){
+    if(!isAdmin())return toast('Réservé à l’administrateur');
+    const uid=activeBtn.dataset.employeeActive, next=activeBtn.dataset.currentActive!=='1';
+    const {data:{session}}=await db.auth.getSession();
+    if(session?.user?.id===uid&&!next)return toast('Vous ne pouvez pas désactiver votre propre accès');
+    const {error}=await db.from('acces_magasin').update({actif:next,updated_at:new Date().toISOString()}).eq('magasin_id',magasinId).eq('user_id',uid);
+    if(error)return toast('Modification impossible');await loadEmployees();toast(next?'Accès activé':'Accès désactivé');
+  }
+});
 $('catalogueSearch').oninput=renderCatalogue;
 $('refreshCatalogue').onclick=()=>loadCatalogue();
 $('newCatalogueBtn').onclick=()=>openCatalogueEditor();
@@ -211,12 +282,14 @@ $('catalogueForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return to
 $('deleteCatalogueBtn').onclick=async()=>{const id=$('catalogueId').value;if(!id)return;if(!confirm('Supprimer cette référence du catalogue ?'))return;const {error}=await db.from('catalogue_produits').delete().eq('id',id).eq('magasin_id',magasinId);if(error)return toast('Suppression impossible');toast('Référence supprimée');await loadCatalogue();show('catalogueView')};
 
 refreshDepartmentSelect();fillCatalogueDepartments();$('expiry').value=iso(today());render();
-window.addEventListener('focus',()=>loadProducts(true));window.addEventListener('beforeunload',stopScan);
+window.addEventListener('focus',()=>{flushQueue();loadProducts(true)});window.addEventListener('online',()=>{toast('Connexion retrouvée — synchronisation…');flushQueue()});window.addEventListener('beforeunload',stopScan);
 
 (async()=>{
   try{
     if(!db)return;
     const {data:{session}}=await db.auth.getSession();
-    if(session && magasinId){$('welcome').classList.add('hidden');$('login').classList.add('hidden');$('app').classList.remove('hidden');await loadProducts(true);startSyncTimer();render()}
+    if(session && magasinId){await loadMyAccess();if(currentAccess?.actif===false){localStorage.removeItem(KM);magasinId=null;return}await loadDepartmentsRemote();$('welcome').classList.add('hidden');$('login').classList.add('hidden');$('app').classList.remove('hidden');await loadProducts(true);startSyncTimer();applyRoleUI();render()}
   }catch(e){console.error(e)}
 })();
+
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=54').catch(console.warn))}

@@ -1,15 +1,1 @@
-self.addEventListener('install', () => {
-  self.skipWaiting();
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.map(key => caches.delete(key)))
-    ).then(() => self.registration.unregister())
-  );
-});
-
-self.addEventListener('fetch', event => {
-  event.respondWith(fetch(event.request));
-});
+const C='frais-proxi-v54';const AS=['./','./index.html','./app.js?v=54','./style.css','./manifest.webmanifest','https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js'];self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(async c=>{for(const u of AS){try{await c.add(u)}catch(e){}}}).then(()=>self.skipWaiting())));self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;e.respondWith(fetch(e.request).then(r=>{let x=r.clone();caches.open(C).then(c=>c.put(e.request,x));return r}).catch(()=>caches.match(e.request).then(r=>r||caches.match('./index.html'))))});
