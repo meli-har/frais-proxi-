@@ -53,3 +53,58 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
 #view-home.view{padding-bottom:calc(150px + env(safe-area-inset-bottom));}
 #view-home .homeSlogan{padding-bottom:18px;}
 @media(max-width:430px){#view-home.view{padding-bottom:calc(165px + env(safe-area-inset-bottom));}}
+
+
+/* V5.6.2 — accueil compact, proche de la maquette */
+@media(max-width:430px){
+  #view-home.view{padding:10px 12px calc(92px + env(safe-area-inset-bottom));}
+  .homeV56{padding-top:10px;}
+  .homeHero{border-radius:20px;padding:14px 15px 13px;margin-bottom:9px;}
+  .homeHero:after{width:155px;height:155px;border-width:27px;right:-68px;top:-62px;}
+  .heroTop{gap:9px;}
+  .hello{font-size:22px;line-height:1.05;}
+  .heroTop strong{font-size:14px;margin-top:4px;}
+  .heroDate{padding:7px 8px;border-radius:12px;font-size:10px;max-width:132px;line-height:1.15;}
+  .homeHero p{font-size:12px;line-height:1.3;margin:10px 0 9px;max-width:285px;}
+  .heroStatus{padding:6px 10px;font-size:10px;}
+  .heroStatusDot{width:18px;height:18px;}
+
+  .homeAlerts{gap:7px;}
+  .miniAlert{border-radius:16px;padding:9px 9px;min-height:101px;}
+  .miniAlert .miniIcon{width:31px;height:31px;font-size:14px;}
+  .miniAlert strong{font-size:25px;margin-top:6px;}
+  .miniAlert b{font-size:10px;line-height:1.08;margin-top:2px;}
+  .miniAlert em{right:8px;top:44px;font-size:22px;}
+
+  .homeStats{border-radius:16px;margin:9px 0 11px;padding:9px 3px;}
+  .homeStats>div{padding:1px 2px;}
+  .homeStats span{font-size:14px;}
+  .homeStats strong{font-size:18px;margin:2px 0;}
+  .homeStats small{font-size:7.5px;}
+
+  .homeSectionTitle{margin:10px 2px 7px;}
+  .homeSectionTitle h2{font-size:16px;}
+  .homeSectionTitle button{font-size:12px;}
+
+  .quickGrid{gap:6px;}
+  .quickGrid button{border-radius:14px;padding:8px 2px;}
+  .quickIcon{width:34px;height:34px;margin-bottom:5px;font-size:18px;}
+  .quickGrid b{font-size:9.5px;line-height:1.05;}
+  .quickGrid small{font-size:7.5px;margin-top:1px;}
+
+  .quickWide{gap:7px;margin-top:7px;}
+  .quickWide button{border-radius:14px;padding:8px 9px;gap:7px;}
+  .quickWide>button>span{width:30px;height:30px;font-size:15px;}
+  .quickWide b{font-size:10px;}
+  .quickWide small{font-size:7.5px;line-height:1.12;}
+  .quickWide em{font-size:19px;}
+
+  .homeRecent{border-radius:15px;}
+  .homeRecent>button{padding:7px 9px;gap:7px;}
+  .recentThumb{width:34px;height:34px;border-radius:9px;}
+  .homeRecent b{font-size:10px;}
+  .homeRecent small{font-size:7.5px;}
+  .homeEmpty{padding:13px;font-size:11px;}
+  .homeSlogan{padding:9px 4px 3px;}
+  .homeSlogan b{font-size:10px}.homeSlogan span{font-size:9px;}
+}
