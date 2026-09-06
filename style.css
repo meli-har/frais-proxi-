@@ -302,3 +302,15 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
     font-size:9px !important;
   }
 }
+/* Correctif : une seule page affichée à la fois */
+#app .view{
+  display:none !important;
+}
+
+#app .view.active{
+  display:block !important;
+}
+
+#app #homeView.view.active{
+  display:flex !important;
+}
