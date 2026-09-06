@@ -2,7 +2,7 @@ const SUPABASE_URL = 'https://sbimesnrwrxgkqkfhiaz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ASbg_BcoGRlcJLwsFX7utw_4hTFpBmp';
 const db = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const KS='fpV4store', KC='fpV4code', KD='fpV4departments', KN='fpV4notifications', KM='fpV43magasinId', KP='fpV55products', KQ='fpV55queue', KCAT='fpV55catalogue';
+const KS='fpV4store', KC='fpV4code', KD='fpV4departments', KN='fpV4notifications', KM='fpV43magasinId', KP='fpV55products', KQ='fpV55queue', KCAT='fpV55catalogue', KDEVICE='fpV552deviceId';
 let products=JSON.parse(localStorage.getItem(KP)||'[]'), catalogue=JSON.parse(localStorage.getItem(KCAT)||'[]'), departments=['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie'], employees=[], currentAccess=null, scanner=false, last='', dailyMode='today', filter='all', magasinId=localStorage.getItem(KM)||null, syncTimer=null;
 const $=x=>document.getElementById(x), $$=s=>[...document.querySelectorAll(s)];
 const iso=d=>{let x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
@@ -39,6 +39,7 @@ async function ensureAnonSession(){
   throw lastError;
 }
 function deviceLabel(){let ua=navigator.userAgent||''; if(/iPhone/i.test(ua))return 'iPhone'; if(/iPad/i.test(ua))return 'iPad'; if(/Android/i.test(ua))return 'Android'; return 'Téléphone'}
+function deviceId(){let id=localStorage.getItem(KDEVICE);if(!id){id=(crypto.randomUUID?crypto.randomUUID():'dev-'+Date.now()+'-'+Math.random().toString(36).slice(2));localStorage.setItem(KDEVICE,id)}return id}
 function isAdmin(){return currentAccess?.role==='admin'&&currentAccess?.actif!==false}
 async function loadMyAccess(){
   if(!db||!magasinId)return null;
@@ -80,7 +81,7 @@ async function loadDepartmentsRemote(){
 async function connectStore(code){
   setSync('Connexion…');
   await ensureAnonSession();
-  const {data,error}=await db.rpc('rejoindre_magasin',{p_code:code,p_appareil:deviceLabel()});
+  const {data,error}=await db.rpc('rejoindre_magasin_v552',{p_code:code,p_appareil:deviceLabel(),p_device_id:deviceId()});
   if(error) throw error;
   magasinId=String(data);
   localStorage.setItem(KM,magasinId);localStorage.setItem(KC,code);localStorage.setItem(KS,'Proxi - Monéteau');
