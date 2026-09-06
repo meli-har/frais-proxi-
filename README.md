@@ -1,7 +1,5 @@
-# Frais Proxi — V5.6
+# Frais Proxi — V5.6.1
 
-Nouvel accueil bleu/orange plus professionnel, inspiré de l’univers grande distribution, sans photo de fruits/légumes.
+Correctif iPhone : tout le contenu de l’accueil peut maintenant défiler au-dessus de la barre de navigation fixe.
 
-Toutes les fonctions de la V5.5.2 sont conservées : photos produits, plusieurs DLC par référence, scan, hors-ligne, rôles Administrateur/Employé et identifiant stable par appareil.
-
-Aucun nouveau script SQL n’est nécessaire si la V5.5.2 fonctionne déjà.
+Toutes les fonctions de la V5.6 sont conservées.
