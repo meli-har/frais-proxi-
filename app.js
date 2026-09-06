@@ -235,7 +235,7 @@ function render(){
   if($('homeTeamStat'))$('homeTeamStat').textContent=employees.filter(x=>x.actif!==false).length||1;
   if($('homeDlcStat'))$('homeDlcStat').textContent=qty(arr('week'));
   if($('heroStatusText')){const n=qty(arr('today'));$('heroStatusText').textContent=n?n+' produit'+(n>1?'s':'')+' à contrôler aujourd’hui':'Tout est à jour';}
-  if($('homeRecent')){const recent=[...activeProducts].slice(-4).reverse();$('homeRecent').innerHTML=recent.length?recent.map(p=>`<button data-add-date="${p.id}"><span class="recentThumb">${productPhotoHTML(p.barcode,p.name)}</span><span><b>${esc(p.name)}</b><small>${p.barcode?'EAN '+esc(p.barcode)+' · ':''}${fmt(p.expiry)}</small></span><em>›</em></button>`).join(''):'<div class="homeEmpty">Aucun produit suivi pour le moment.</div>'; }
+  if($('homeRecent')){const recent=[...activeProducts].slice(-4).reverse();$('homeRecent').innerHTML=recent.length?recent.map(p=>`<button data-add-date="${p.id}"><span class="recentThumb">${productPhotoHTML(p.barcode,p.name)}</span><span><b>Produit suivi</b><small>${p.barcode?esc(p.barcode)+' · ':''}${esc(p.name)}</small></span><em>${fmt(p.expiry)}</em></button>`).join(''):'<div class="homeEmpty">Aucun produit suivi pour le moment.</div>'; }
   let q=($('search')?.value||'').toLowerCase();let ps=products.filter(p=>p.name.toLowerCase().includes(q)||(p.barcode||'').includes(q));if(filter!=='all')ps=ps.filter(p=>arr(filter).some(x=>x.id===p.id));if($('productList')){const gs=groupedProducts(ps);$('productList').innerHTML=gs.length?gs.map(productGroupHTML).join(''):'<div class="card">Aucun produit.</div>';}
   renderStats();if($('settingsStore'))$('settingsStore').textContent='Proxi - Monéteau';if($('storeName'))$('storeName').textContent='Proxi - Monéteau';
 }
