@@ -210,3 +210,30 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
   background:#0876c9 !important;
   border-color:#ffffff !important;
 }
+/* V5.7.1 - cartes DLC accueil */
+#homeView .homeAlerts{
+  gap:8px !important;
+}
+
+#homeView .miniAlert{
+  border-radius:18px !important;
+  padding:12px 10px !important;
+  min-height:116px !important;
+}
+
+#homeView .miniAlert strong{
+  font-size:25px !important;
+  font-weight:900 !important;
+}
+
+#homeView .miniAlert small{
+  font-size:13px !important;
+  font-weight:800 !important;
+  line-height:1.05 !important;
+}
+
+#homeView .miniAlert .miniIcon{
+  width:38px !important;
+  height:38px !important;
+  font-size:20px !important;
+}
