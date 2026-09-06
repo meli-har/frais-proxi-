@@ -1,5 +1,5 @@
-# Frais Proxi — V5.6.2
+# Frais Proxi — V5.6.3
 
-Accueil compact bleu/orange, rapproché de la maquette : cartes, statistiques et actions rapides réduites pour afficher davantage de contenu sur un écran iPhone.
+Accueil **vraiment compact pour iPhone**, plus proche de la maquette : bandeau, alertes, statistiques et actions rapides réduits verticalement.
 
-Toutes les fonctions de la V5.6.1 sont conservées. Aucune mise à jour Supabase nécessaire.
+Toutes les fonctions de la V5.6.2 sont conservées. Aucun changement Supabase nécessaire.

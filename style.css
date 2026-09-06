@@ -108,3 +108,60 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
   .homeSlogan{padding:9px 4px 3px;}
   .homeSlogan b{font-size:10px}.homeSlogan span{font-size:9px;}
 }
+
+
+/* V5.6.3 — accueil réellement compact iPhone */
+@media(max-width:430px){
+  #homeView.view{padding:7px 12px calc(82px + env(safe-area-inset-bottom))!important;}
+  #homeView.homeV56{padding-top:7px!important;min-height:auto!important;}
+  #homeView .homeHero{border-radius:18px!important;padding:10px 13px 9px!important;margin-bottom:7px!important;box-shadow:0 7px 18px #075a9f20!important;}
+  #homeView .homeHero:after{width:125px!important;height:125px!important;border-width:22px!important;right:-55px!important;top:-52px!important;}
+  #homeView .heroTop{gap:7px!important;}
+  #homeView .hello{font-size:19px!important;line-height:1!important;letter-spacing:-.35px!important;}
+  #homeView .heroTop strong{font-size:12px!important;margin-top:3px!important;line-height:1.05!important;}
+  #homeView .heroDate{padding:5px 7px!important;border-radius:10px!important;font-size:8.5px!important;max-width:112px!important;line-height:1.05!important;gap:5px!important;}
+  #homeView .homeHero p{font-size:10.5px!important;line-height:1.2!important;margin:7px 0 7px!important;max-width:265px!important;}
+  #homeView .heroStatus{padding:4px 8px!important;font-size:9px!important;gap:5px!important;}
+  #homeView .heroStatusDot{width:16px!important;height:16px!important;font-size:9px!important;}
+
+  #homeView .homeAlerts{gap:6px!important;}
+  #homeView .miniAlert{border-radius:14px!important;padding:7px 8px!important;min-height:82px!important;}
+  #homeView .miniAlert .miniIcon{width:27px!important;height:27px!important;font-size:12px!important;}
+  #homeView .miniAlert strong{font-size:21px!important;margin-top:4px!important;line-height:.95!important;}
+  #homeView .miniAlert b{font-size:8.8px!important;line-height:1.02!important;margin-top:2px!important;}
+  #homeView .miniAlert em{right:7px!important;top:35px!important;font-size:18px!important;}
+
+  #homeView .homeStats{border-radius:14px!important;margin:7px 0 8px!important;padding:6px 2px!important;}
+  #homeView .homeStats>div{padding:0 2px!important;}
+  #homeView .homeStats span{font-size:11px!important;line-height:1!important;}
+  #homeView .homeStats strong{font-size:15px!important;margin:1px 0!important;line-height:1!important;}
+  #homeView .homeStats small{font-size:6.5px!important;line-height:1.05!important;}
+
+  #homeView .homeSectionTitle{margin:7px 2px 5px!important;}
+  #homeView .homeSectionTitle h2{font-size:14px!important;line-height:1!important;}
+  #homeView .homeSectionTitle button{font-size:10px!important;padding:0!important;}
+
+  #homeView .quickGrid{gap:5px!important;}
+  #homeView .quickGrid button{border-radius:12px!important;padding:6px 2px!important;min-height:66px!important;}
+  #homeView .quickIcon{width:29px!important;height:29px!important;margin:0 auto 4px!important;font-size:15px!important;}
+  #homeView .quickGrid b{font-size:8px!important;line-height:1!important;}
+  #homeView .quickGrid small{font-size:6.5px!important;line-height:1!important;margin-top:1px!important;}
+
+  #homeView .quickWide{gap:6px!important;margin-top:6px!important;}
+  #homeView .quickWide button{border-radius:12px!important;padding:6px 8px!important;gap:6px!important;min-height:44px!important;}
+  #homeView .quickWide>button>span{width:27px!important;height:27px!important;font-size:13px!important;}
+  #homeView .quickWide b{font-size:8.5px!important;line-height:1!important;}
+  #homeView .quickWide small{font-size:6.5px!important;line-height:1.05!important;margin-top:1px!important;}
+  #homeView .quickWide em{font-size:16px!important;}
+
+  #homeView .homeRecent{border-radius:13px!important;}
+  #homeView .homeRecent>button{padding:6px 8px!important;gap:6px!important;}
+  #homeView .recentThumb{width:29px!important;height:29px!important;border-radius:8px!important;}
+  #homeView .homeRecent b{font-size:8.5px!important;line-height:1!important;}
+  #homeView .homeRecent small{font-size:6.5px!important;line-height:1.05!important;margin-top:1px!important;}
+  #homeView .homeRecent em{font-size:15px!important;}
+  #homeView .homeEmpty{padding:10px!important;font-size:9px!important;}
+  #homeView .homeSlogan{padding:6px 3px 1px!important;}
+  #homeView .homeSlogan b{font-size:8.5px!important;}
+  #homeView .homeSlogan span{font-size:7.5px!important;margin-top:1px!important;}
+}
