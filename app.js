@@ -227,6 +227,15 @@ function render(){
   let t=today();if($('currentDate'))$('currentDate').textContent=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(t);
   if($('todayCount'))$('todayCount').textContent=qty(arr('today'));if($('tomorrowCount'))$('tomorrowCount').textContent=qty(arr('tomorrow'));if($('weekCount'))$('weekCount').textContent=qty(arr('week'));
   let names=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];if($('upcoming'))$('upcoming').innerHTML=[0,1,2,3,4].map(n=>{let d=add(t,n),c=qty(products.filter(p=>!p.done&&p.expiry===iso(d)));return `<div class="day ${n===0?'today':''}"><b>${names[d.getDay()]}</b><strong>${d.getDate()}</strong><span>${c||'0'}</span></div>`}).join('');
+  if($('heroDateText'))$('heroDateText').textContent=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long'}).format(t);
+  if($('heroStoreName'))$('heroStoreName').textContent='Proxi - Monéteau';
+  const activeProducts=products.filter(p=>!p.done), refCount=new Set(activeProducts.map(p=>p.barcode||p.name)).size;
+  if($('homeProductStat'))$('homeProductStat').textContent=refCount;
+  if($('homeRayonStat'))$('homeRayonStat').textContent=getDepartments().length;
+  if($('homeTeamStat'))$('homeTeamStat').textContent=employees.filter(x=>x.actif!==false).length||1;
+  if($('homeDlcStat'))$('homeDlcStat').textContent=qty(arr('week'));
+  if($('heroStatusText')){const n=qty(arr('today'));$('heroStatusText').textContent=n?n+' produit'+(n>1?'s':'')+' à contrôler aujourd’hui':'Tout est à jour';}
+  if($('homeRecent')){const recent=[...activeProducts].slice(-4).reverse();$('homeRecent').innerHTML=recent.length?recent.map(p=>`<button data-add-date="${p.id}"><span class="recentThumb">${productPhotoHTML(p.barcode,p.name)}</span><span><b>${esc(p.name)}</b><small>${p.barcode?'EAN '+esc(p.barcode)+' · ':''}${fmt(p.expiry)}</small></span><em>›</em></button>`).join(''):'<div class="homeEmpty">Aucun produit suivi pour le moment.</div>'; }
   let q=($('search')?.value||'').toLowerCase();let ps=products.filter(p=>p.name.toLowerCase().includes(q)||(p.barcode||'').includes(q));if(filter!=='all')ps=ps.filter(p=>arr(filter).some(x=>x.id===p.id));if($('productList')){const gs=groupedProducts(ps);$('productList').innerHTML=gs.length?gs.map(productGroupHTML).join(''):'<div class="card">Aucun produit.</div>';}
   renderStats();if($('settingsStore'))$('settingsStore').textContent='Proxi - Monéteau';if($('storeName'))$('storeName').textContent='Proxi - Monéteau';
 }
@@ -339,3 +348,6 @@ window.addEventListener('focus',()=>{flushQueue();loadProducts(true)});window.ad
 })();
 
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=55').catch(console.warn))}
+
+// V5.6 — actions dynamiques de l'accueil
+document.addEventListener('click',e=>{const b=e.target.closest('#homeRecent [data-add-date]');if(!b)return;const p=products.find(x=>String(x.id)===String(b.dataset.addDate));if(p)addAnotherDate(p)});
