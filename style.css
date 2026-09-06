@@ -176,3 +176,19 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
 #homeView .homeSectionTitle{margin:2px 2px 0;display:flex;justify-content:space-between;align-items:center}#homeView .homeSectionTitle h2{font-size:16px;color:#062f56}#homeView .homeSectionTitle button{background:none;border:0;color:#006dc6;font-size:10px;font-weight:800}.quickGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.quickGrid button{min-height:96px;border:0;border-radius:17px;background:#fff;box-shadow:0 5px 16px #07385c18;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#092f54}.quickGrid .searchQuick{background:linear-gradient(145deg,#fff,#f6e8ff)}.quickIcon{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;color:#fff;font-size:22px}.quickIcon.blue{background:#078cf0}.quickIcon.orange{background:#ff8900}.quickIcon.purple{background:linear-gradient(135deg,#7d26e7,#cf3bf0)}.quickIcon.slate{background:#58778a}.quickGrid b{font-size:10px;line-height:1.05}.quickGrid b small{font-weight:500;color:#75899a}.quickWide{display:grid;grid-template-columns:1fr 1fr;gap:8px}.quickWide button{display:grid;grid-template-columns:42px 1fr 18px;align-items:center;gap:8px;min-height:68px;border:0;border-radius:16px;background:#fff;padding:8px 11px;box-shadow:0 5px 16px #07385c16;text-align:left}.wideIcon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:18px}.wideIcon.orange{background:#fff0df;color:#ff8200}.wideIcon.green{background:#e0fae8;color:#08a947}.quickWide b{font-size:11px;color:#07365f}.quickWide small{font-size:8px;color:#698296;line-height:1.15}.quickWide em{font-style:normal;font-size:24px;color:#006ebf}
 .activityTitle{margin-top:0!important}.activityList{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 5px 16px #07385c16}.activityList>button{min-height:46px;padding:6px 9px;border-bottom:1px solid #e4edf3}.activityList>button:last-child{border-bottom:0}.activityList .recentThumb{width:32px;height:32px;border-radius:50%;background:#e5f6ff;display:grid;place-items:center;overflow:hidden}.activityList b{font-size:9px}.activityList small{font-size:7px}.homeFooterBrand{display:flex;justify-content:space-between;align-items:end;padding:4px 6px 2px}.footerLeclerc{font-size:11px;font-weight:900;color:#0064ad}.footerLeclerc b{font-size:19px}.footerLeclerc span{display:inline-block;margin-left:5px;font-family:cursive;font-size:10px;font-weight:500;line-height:1.1}.homeSlogan{text-align:right;padding:0!important}.homeSlogan b{display:block;color:#ff7d00;font-family:cursive;font-size:11px}.homeSlogan span{display:block;color:#0068b3;font-style:italic;font-size:8px}
 @media(max-width:600px){#homeView.homeV57{padding-top:7px;gap:7px}.heroContentV57{min-height:194px}.heroCopyV57{padding:15px 10px 12px 14px}.heroCopyV57 .hello{font-size:25px}.heroCopyV57 strong{font-size:16px}.heroCopyV57 p{font-size:11px}.homeHeroV57{border-radius:18px}#homeView .miniAlert{min-height:105px}#homeView .homeStats{padding:7px 3px}.quickGrid button{min-height:88px}.quickWide button{min-height:60px}}
+.brandLeclerc{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:34px;
+  height:34px;
+  margin-left:8px;
+  border:3px solid #fff;
+  border-radius:50%;
+  color:#ff7a00 !important;
+  background:#0876c9;
+  font-size:22px;
+  font-weight:900;
+  line-height:1;
+  vertical-align:middle;
+}
