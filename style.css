@@ -195,8 +195,8 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
   color:#ff7900 !important;
   background:#0876c9 !important;
   border:3px solid white !important;
-  width:34px !important;
-  height:34px !important;
+  width:28px !important;
+  height:28px !important;
   border-radius:50% !important;
   display:inline-flex !important;
   align-items:center !important;
