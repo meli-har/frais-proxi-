@@ -263,3 +263,42 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
   line-height:1.1 !important;
   margin-top:5px !important;
 }
+/* V5.7.3 - banderole accueil comme le modèle */
+#homeView .homeHeroV57{
+  min-height:245px !important;
+  border-radius:20px !important;
+  overflow:hidden !important;
+}
+
+#homeView .heroContentV57{
+  min-height:245px !important;
+}
+
+#homeView .heroCopyV57{
+  width:48% !important;
+  padding:18px 0 16px 18px !important;
+  position:relative !important;
+  z-index:3 !important;
+}
+
+#homeView .heroVisualV57{
+  width:58% !important;
+  position:absolute !important;
+  right:0 !important;
+  top:0 !important;
+  bottom:0 !important;
+  background-position:center !important;
+  background-size:cover !important;
+}
+
+#homeView .heroVisualV57:after{
+  content:"" !important;
+  position:absolute !important;
+  left:-60px !important;
+  bottom:-70px !important;
+  width:125% !important;
+  height:145px !important;
+  background:#087dcc !important;
+  transform:rotate(-8deg) !important;
+  border-top:4px solid #1597f0 !important;
+}
