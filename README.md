@@ -1,4 +1,4 @@
-# Frais Proxi V5.5
+# Frais Proxi V5.5.1
 
 Nouveautés :
 - photos produits dans le catalogue et la liste Produits ;
@@ -14,3 +14,9 @@ Nouveautés :
 3. Ouvrir l'application avec `?v=55` lors du premier test.
 
 Les photos automatiques dépendent de la présence d'une photo pour l'EAN dans Open Food Facts. Si aucune photo n'est disponible, l'application affiche un emplacement neutre et l'administrateur peut renseigner une URL de photo dans la fiche catalogue.
+
+
+## Correctifs V5.5.1
+- Le bouton « Ajouter des DLC » reprend automatiquement le nom, l’EAN, le rayon et les notes de la référence.
+- Dans Mes produits, le nom du catalogue et la photo sont utilisés même si une ancienne DLC avait été enregistrée avec l’EAN comme nom.
+- Aucun nouveau SQL Supabase n’est nécessaire après la V5.5.

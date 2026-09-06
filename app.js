@@ -19,7 +19,9 @@ function inWeek(p){let d=new Date(p.expiry+'T00:00:00'),t=today(),e=add(t,6);ret
 function arr(mode){let t=iso(today()),tm=iso(add(today(),1));return products.filter(p=>!p.done&&(mode==='today'?p.expiry<=t:mode==='tomorrow'?p.expiry===tm:mode==='week'?inWeek(p):true))}
 function qty(a){return a.reduce((n,p)=>n+(+p.quantity||1),0)}
 
-function mapRow(r){return {id:r.id,name:r.nom,barcode:r.code_barres||'',quantity:r.quantite||1,expiry:r.dlc,department:r.rayon||'Frais',note:r.notes||'',done:!!r.retire,doneAt:r.retire_at||null}}
+function catalogueMeta(code){return catalogue.find(x=>String(x.code_barres||'')===String(code||''))||null}
+function looksLikeBarcodeName(name,code){const n=String(name||'').trim(),c=String(code||'').trim();return !n||(c&&n===c)||(/^\d{8,14}$/.test(n))}
+function mapRow(r){const code=r.code_barres||'',cat=catalogueMeta(code);return {id:r.id,name:(cat?.nom&&looksLikeBarcodeName(r.nom,code))?cat.nom:(r.nom||cat?.nom||code||'Produit'),barcode:code,quantity:r.quantite||1,expiry:r.dlc,department:cat?.rayon||r.rayon||'Frais',note:r.notes||cat?.notes||'',done:!!r.retire,doneAt:r.retire_at||null}}
 function saveLocal(){localStorage.setItem(KP,JSON.stringify(products))}
 function queue(op){let q=JSON.parse(localStorage.getItem(KQ)||'[]');q.push(op);localStorage.setItem(KQ,JSON.stringify(q))}
 async function flushQueue(){if(!navigator.onLine||!db||!magasinId)return;let q=JSON.parse(localStorage.getItem(KQ)||'[]'),left=[];for(const op of q){try{if(op.type==='insert')await addProductRemote(op.p,true);else if(op.type==='delete'){let {error}=await db.from('produits').delete().eq('id',op.id).eq('magasin_id',magasinId);if(error)throw error}else if(op.type==='update'){let {error}=await db.from('produits').update(op.payload).eq('id',op.id).eq('magasin_id',magasinId);if(error)throw error}}catch(e){left.push(op)}}localStorage.setItem(KQ,JSON.stringify(left));if(!left.length)await loadProducts(true)}
@@ -100,7 +102,7 @@ function startSyncTimer(){if(syncTimer)clearInterval(syncTimer);syncTimer=setInt
 async function addProductRemote(p,noReload=false){const {error}=await db.from('produits').insert({magasin_id:+magasinId,nom:p.name,code_barres:p.barcode||null,quantite:p.quantity,dlc:p.expiry,rayon:p.department,notes:p.note||null,retire:false});if(error)throw error;if(!noReload)await loadProducts(true)}
 async function addProductSmart(p){if(navigator.onLine){try{return await addProductRemote(p)}catch(e){}}const temp={...p,id:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),done:false,doneAt:null};products.push(temp);saveLocal();queue({type:'insert',p});render();toast('Ajouté hors ligne — synchronisation à venir')}
 async function deleteProductSmart(p){if(!confirm('Supprimer cette DLC saisie ?'))return;if(String(p.id).startsWith('local-')){products=products.filter(x=>x.id!==p.id)}else if(navigator.onLine){const {error}=await db.from('produits').delete().eq('id',p.id).eq('magasin_id',magasinId);if(error){queue({type:'delete',id:p.id});products=products.filter(x=>x.id!==p.id)}else await loadProducts(true)}else{queue({type:'delete',id:p.id});products=products.filter(x=>x.id!==p.id)}saveLocal();render();toast('DLC supprimée')}
-function addAnotherDate(p){$('name').value=p.name;$('barcode').value=p.barcode||'';$('department').value=p.department;$('note').value=p.note||'';resetDlcRows(iso(today()),1);show('addView');toast('Ajoutez une ou plusieurs DLC')}
+function addAnotherDate(p){const cat=catalogueMeta(p.barcode),name=cat?.nom||p.name||p.barcode||'',dep=cat?.rayon||p.department||'Frais',note=p.note||cat?.notes||'';$('name').value=name;$('barcode').value=p.barcode||'';refreshDepartmentSelect();const opts=[...$('department').options].map(o=>o.value);if(opts.includes(dep))$('department').value=dep;$('note').value=note;resetDlcRows(iso(today()),1);show('addView');toast('Référence reprise — ajoutez vos DLC')}
 
 async function findCatalogueProduct(code){
   if(!db||!magasinId||!code)return null;
@@ -191,8 +193,9 @@ function resetDlcRows(date=iso(today()),qtyValue=1){
 function dlcRowHTML(date=iso(today()),qtyValue=1,removable=true){return `<div class="dlcEntry"><label>Date<input class="dlcDate" type="date" required value="${esc(date)}"></label><label>Quantité<div class="quantity compactQty"><button type="button" class="qtyMinus">−</button><input class="dlcQty" type="number" min="1" value="${Math.max(1,+qtyValue||1)}"><button type="button" class="qtyPlus">+</button></div></label><button type="button" class="removeDlcRow ${removable?'':'hidden'}" aria-label="Supprimer cette date">×</button></div>`}
 function refreshDlcRemoveButtons(){const rows=$$('.dlcEntry');rows.forEach(r=>r.querySelector('.removeDlcRow')?.classList.toggle('hidden',rows.length===1))}
 function groupedProducts(list){
-  const m=new Map();for(const p of list){const k=p.barcode||`${p.name}|${p.department}`;if(!m.has(k))m.set(k,{key:k,name:p.name,barcode:p.barcode,department:p.department,note:p.note,items:[]});m.get(k).items.push(p)}return [...m.values()]
+  const m=new Map();for(const p of list){const k=p.barcode||`${p.name}|${p.department}`,cat=catalogueMeta(p.barcode);if(!m.has(k))m.set(k,{key:k,name:cat?.nom||p.name||p.barcode||'Produit',barcode:p.barcode,department:cat?.rayon||p.department||'Frais',note:p.note||cat?.notes||'',items:[]});m.get(k).items.push(p)}return [...m.values()]
 }
+
 function productGroupHTML(g){
   const items=[...g.items].sort((a,b)=>String(a.expiry).localeCompare(String(b.expiry)));
   const total=qty(items.filter(x=>!x.done));
@@ -276,7 +279,7 @@ document.addEventListener('click',async e=>{let b=e.target.closest('[data-done]'
 $('doneAll').onclick=async()=>{let a=arr(dailyMode);try{for(const p of a)await setDoneRemote(p.id,true);toast('Tout est retiré');openDaily(dailyMode)}catch(e){toast('Une erreur est survenue')}};
 $('manualBarcodeBtn').onclick=()=>{let c=prompt('Numéro sous le code-barres :');if(c){stopScan();identifyBarcode(c.trim())}};
 $('teamBtn').onclick=()=>show('employeesView');$('menuBtn').onclick=()=>show('settingsView');
-$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v5.5.json';a.click()};
+$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v5.5.1.json';a.click()};
 function getDepartments(){return departments.length?departments:['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}
 function refreshDepartmentSelect(){let a=getDepartments(),sel=$('department'),cur=sel.value;sel.innerHTML=a.map(x=>`<option>${esc(x)}</option>`).join('');if(a.includes(cur))sel.value=cur}
 async function renderDepartments(){
