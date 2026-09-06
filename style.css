@@ -306,15 +306,15 @@ z-index:1 !important;
 /* Logo E.Leclerc dans la banderole */
 #homeView .heroLeclercLogo{
 background:white !important;
-padding:5px 8px !important;
+padding:3px 6px !important;
 border-radius:10px !important;
 box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
   display:block !important;
-  width:125px !important;
+  width:105px !important;
   height:auto !important;
   position:absolute !important;
-  right:18px !important;
-  bottom:18px !important;
+  right:14px !important;
+  bottom:12px !important;
   z-index:10 !important;
   object-fit:contain !important;
 }
