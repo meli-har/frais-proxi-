@@ -165,3 +165,140 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
   #homeView .homeSlogan b{font-size:8.5px!important;}
   #homeView .homeSlogan span{font-size:7.5px!important;margin-top:1px!important;}
 }
+/* V5.6.5 — accueil réparti sur toute la hauteur */
+@media (max-width:600px){
+
+  #homeView.view{
+    display:flex !important;
+    flex-direction:column !important;
+    justify-content:space-between !important;
+    min-height:calc(100dvh - 78px) !important;
+    padding:10px 12px calc(88px + env(safe-area-inset-bottom)) !important;
+    gap:8px !important;
+  }
+
+  #homeView .homeHero{
+    padding:14px 15px !important;
+    border-radius:20px !important;
+    min-height:150px !important;
+  }
+
+  #homeView .hello{
+    font-size:24px !important;
+  }
+
+  #homeView .heroTop strong{
+    font-size:15px !important;
+  }
+
+  #homeView .homeHero p{
+    font-size:12px !important;
+    line-height:1.3 !important;
+  }
+
+  #homeView .heroStatus{
+    padding:6px 10px !important;
+    font-size:11px !important;
+  }
+
+  #homeView .homeAlerts{
+    gap:7px !important;
+  }
+
+  #homeView .miniAlert{
+    min-height:105px !important;
+    padding:10px !important;
+    border-radius:18px !important;
+  }
+
+  #homeView .miniAlert .miniIcon{
+    width:36px !important;
+    height:36px !important;
+  }
+
+  #homeView .miniAlert strong{
+    font-size:25px !important;
+  }
+
+  #homeView .miniAlert b{
+    font-size:11px !important;
+  }
+
+  #homeView .homeStats{
+    min-height:70px !important;
+    border-radius:17px !important;
+  }
+
+  #homeView .homeStats>div{
+    padding:5px 2px !important;
+  }
+
+  #homeView .homeStats strong{
+    font-size:19px !important;
+  }
+
+  #homeView .homeStats small{
+    font-size:8px !important;
+  }
+
+  #homeView .homeSectionTitle{
+    margin:4px 2px 2px !important;
+  }
+
+  #homeView .homeSectionTitle h2{
+    font-size:17px !important;
+  }
+
+  #homeView .quickGrid{
+    gap:7px !important;
+  }
+
+  #homeView .quickGrid button{
+    min-height:100px !important;
+    border-radius:16px !important;
+  }
+
+  #homeView .quickIcon{
+    width:38px !important;
+    height:38px !important;
+  }
+
+  #homeView .quickGrid b{
+    font-size:11px !important;
+  }
+
+  #homeView .quickGrid small{
+    font-size:8px !important;
+  }
+
+  #homeView .quickWide{
+    gap:7px !important;
+  }
+
+  #homeView .quickWide button{
+    min-height:62px !important;
+    border-radius:16px !important;
+  }
+
+  #homeView .homeRecent{
+    border-radius:16px !important;
+  }
+
+  #homeView .homeEmpty{
+    padding:13px !important;
+    font-size:11px !important;
+  }
+
+  #homeView .homeSlogan{
+    margin-top:auto !important;
+    padding:5px 5px 2px !important;
+  }
+
+  #homeView .homeSlogan b{
+    font-size:11px !important;
+  }
+
+  #homeView .homeSlogan span{
+    font-size:9px !important;
+  }
+}
