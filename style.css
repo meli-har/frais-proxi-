@@ -302,3 +302,14 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
   transform:rotate(-8deg) !important;
   border-top:4px solid #1597f0 !important;
 }
+/* Logo E.Leclerc dans la banderole */
+#homeView .heroLeclercLogo{
+  display:block !important;
+  width:115px !important;
+  height:auto !important;
+  position:absolute !important;
+  right:18px !important;
+  bottom:18px !important;
+  z-index:10 !important;
+  object-fit:contain !important;
+}
