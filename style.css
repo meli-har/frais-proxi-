@@ -191,4 +191,17 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
   font-weight:900;
   line-height:1;
   vertical-align:middle;
+}.brand .brandLeclerc{
+  color:#ff7900 !important;
+  background:#0876c9 !important;
+  border:3px solid white !important;
+  width:34px !important;
+  height:34px !important;
+  border-radius:50% !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  margin-left:8px !important;
+  font-size:22px !important;
+  font-weight:900 !important;
 }
