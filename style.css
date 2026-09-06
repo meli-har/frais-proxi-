@@ -205,3 +205,8 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
   font-size:22px !important;
   font-weight:900 !important;
 }
+#app .top .brand .brandLeclerc{
+  color:#ff7900 !important;
+  background:#0876c9 !important;
+  border-color:#ffffff !important;
+}
