@@ -2,8 +2,8 @@ const SUPABASE_URL = 'https://sbimesnrwrxgkqkfhiaz.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_ASbg_BcoGRlcJLwsFX7utw_4hTFpBmp';
 const db = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const KS='fpV4store', KC='fpV4code', KD='fpV4departments', KN='fpV4notifications', KM='fpV43magasinId', KP='fpV54products', KQ='fpV54queue';
-let products=JSON.parse(localStorage.getItem(KP)||'[]'), catalogue=[], departments=['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie'], employees=[], currentAccess=null, scanner=false, last='', dailyMode='today', filter='all', magasinId=localStorage.getItem(KM)||null, syncTimer=null;
+const KS='fpV4store', KC='fpV4code', KD='fpV4departments', KN='fpV4notifications', KM='fpV43magasinId', KP='fpV55products', KQ='fpV55queue', KCAT='fpV55catalogue';
+let products=JSON.parse(localStorage.getItem(KP)||'[]'), catalogue=JSON.parse(localStorage.getItem(KCAT)||'[]'), departments=['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie'], employees=[], currentAccess=null, scanner=false, last='', dailyMode='today', filter='all', magasinId=localStorage.getItem(KM)||null, syncTimer=null;
 const $=x=>document.getElementById(x), $$=s=>[...document.querySelectorAll(s)];
 const iso=d=>{let x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
 const add=(d,n)=>{let x=new Date(d);x.setDate(x.getDate()+n);return x};
@@ -85,6 +85,7 @@ async function connectStore(code){
   await loadMyAccess();
   if(currentAccess?.actif===false) throw new Error('Cet accès a été désactivé par un administrateur');
   await loadDepartmentsRemote();
+  await loadCatalogue();
   await loadProducts();
   setSync('Connecté à Proxi - Monéteau',true);
   startSyncTimer();
@@ -97,9 +98,9 @@ async function loadProducts(silent=false){
 }
 function startSyncTimer(){if(syncTimer)clearInterval(syncTimer);syncTimer=setInterval(()=>loadProducts(true),8000)}
 async function addProductRemote(p,noReload=false){const {error}=await db.from('produits').insert({magasin_id:+magasinId,nom:p.name,code_barres:p.barcode||null,quantite:p.quantity,dlc:p.expiry,rayon:p.department,notes:p.note||null,retire:false});if(error)throw error;if(!noReload)await loadProducts(true)}
-async function addProductSmart(p){if(navigator.onLine){try{return await addProductRemote(p)}catch(e){}}const temp={...p,id:'local-'+Date.now(),done:false,doneAt:null};products.push(temp);saveLocal();queue({type:'insert',p});render();toast('Ajouté hors ligne — synchronisation à venir')}
+async function addProductSmart(p){if(navigator.onLine){try{return await addProductRemote(p)}catch(e){}}const temp={...p,id:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),done:false,doneAt:null};products.push(temp);saveLocal();queue({type:'insert',p});render();toast('Ajouté hors ligne — synchronisation à venir')}
 async function deleteProductSmart(p){if(!confirm('Supprimer cette DLC saisie ?'))return;if(String(p.id).startsWith('local-')){products=products.filter(x=>x.id!==p.id)}else if(navigator.onLine){const {error}=await db.from('produits').delete().eq('id',p.id).eq('magasin_id',magasinId);if(error){queue({type:'delete',id:p.id});products=products.filter(x=>x.id!==p.id)}else await loadProducts(true)}else{queue({type:'delete',id:p.id});products=products.filter(x=>x.id!==p.id)}saveLocal();render();toast('DLC supprimée')}
-function addAnotherDate(p){$('name').value=p.name;$('barcode').value=p.barcode||'';$('department').value=p.department;$('note').value=p.note||'';$('quantity').value=1;$('expiry').value=iso(today());show('addView');toast('Choisissez la nouvelle DLC')}
+function addAnotherDate(p){$('name').value=p.name;$('barcode').value=p.barcode||'';$('department').value=p.department;$('note').value=p.note||'';resetDlcRows(iso(today()),1);show('addView');toast('Ajoutez une ou plusieurs DLC')}
 
 async function findCatalogueProduct(code){
   if(!db||!magasinId||!code)return null;
@@ -123,7 +124,7 @@ function guessDepartment(p){
 }
 async function lookupOpenFoodFacts(code){
   try{
-    const url='https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json?fields=code,product_name,product_name_fr,brands,quantity,categories,categories_tags';
+    const url='https://world.openfoodfacts.org/api/v2/product/'+encodeURIComponent(code)+'.json?fields=code,product_name,product_name_fr,brands,quantity,categories,categories_tags,image_front_small_url,image_front_url,image_url';
     const r=await fetch(url,{headers:{'Accept':'application/json'}});
     if(!r.ok)return null;
     const j=await r.json();
@@ -131,12 +132,12 @@ async function lookupOpenFoodFacts(code){
     const p=j.product;
     const name=(p.product_name_fr||p.product_name||'').trim();
     if(!name)return null;
-    return {nom:name,marque:(p.brands||'').trim(),rayon:guessDepartment(p),notes:(p.quantity||'').trim(),source:'openfoodfacts'};
+    return {nom:name,marque:(p.brands||'').trim(),rayon:guessDepartment(p),notes:(p.quantity||'').trim(),photo_url:(p.image_front_small_url||p.image_front_url||p.image_url||'').trim(),source:'openfoodfacts'};
   }catch(e){console.warn('Open Food Facts:',e);return null}
 }
 async function rememberCatalogueProduct(p){
   if(!db||!magasinId||!p.barcode||!p.name)return;
-  const payload={magasin_id:+magasinId,code_barres:p.barcode,nom:p.name,marque:'',rayon:p.department||null,notes:p.note||null,source:'magasin',updated_at:new Date().toISOString()};
+  const existing=catalogue.find(x=>x.code_barres===p.barcode);const payload={magasin_id:+magasinId,code_barres:p.barcode,nom:p.name,marque:'',rayon:p.department||null,notes:p.note||null,photo_url:existing?.photo_url||p.photo_url||null,source:'magasin',updated_at:new Date().toISOString()};
   const {error}=await db.from('catalogue_produits').upsert(payload,{onConflict:'magasin_id,code_barres'});
   if(error&&!/catalogue_produits|does not exist|schema cache/i.test(error.message||''))console.warn('Enregistrement catalogue:',error);
 }
@@ -157,12 +158,45 @@ async function identifyBarcode(code){
     $('name').value=off.nom;
     const opts=[...$('department').options].map(o=>o.value);if(opts.includes(off.rayon))$('department').value=off.rayon;
     const extras=[off.marque,off.notes].filter(Boolean).join(' · ');if(extras)$('note').value=extras;
+    if(off.photo_url){await saveCataloguePhoto(code,off.photo_url,off);}
     toast('Produit reconnu automatiquement');
   }else{
     $('name').value='';
     toast('Produit inconnu : entrez son nom une fois');
   }
   show('addView');
+}
+
+function saveCatalogueLocal(){localStorage.setItem(KCAT,JSON.stringify(catalogue))}
+function photoForBarcode(code){return catalogue.find(x=>x.code_barres===code)?.photo_url||''}
+function productPhotoHTML(code,name=''){const url=photoForBarcode(code);return url?`<img class="productPhoto" src="${esc(url)}" alt="${esc(name)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="photoFallback" style="display:none">▥</span>`:`<span class="photoFallback">▥</span>`}
+async function saveCataloguePhoto(code,url,off=null){
+  if(!db||!magasinId||!code||!url)return;
+  const row=catalogue.find(x=>x.code_barres===code);
+  if(row){row.photo_url=url;saveCatalogueLocal();renderCatalogue();render()}
+  if(isAdmin()){
+    const payload={photo_url:url,updated_at:new Date().toISOString()};
+    if(!row&&off)Object.assign(payload,{magasin_id:+magasinId,code_barres:code,nom:off.nom||code,marque:off.marque||'',rayon:off.rayon||null,notes:off.notes||null,source:'openfoodfacts'});
+    try{if(row)await db.from('catalogue_produits').update(payload).eq('id',row.id).eq('magasin_id',magasinId);else if(off)await db.from('catalogue_produits').upsert(payload,{onConflict:'magasin_id,code_barres'})}catch(e){console.warn('Photo catalogue:',e)}
+  }
+}
+async function enrichMissingPhotos(limit=60){
+  if(!navigator.onLine||!isAdmin())return;
+  const missing=catalogue.filter(x=>!x.photo_url&&x.code_barres).slice(0,limit);
+  for(const row of missing){const off=await lookupOpenFoodFacts(row.code_barres);if(off?.photo_url)await saveCataloguePhoto(row.code_barres,off.photo_url,off)}
+}
+function resetDlcRows(date=iso(today()),qtyValue=1){
+  const box=$('dlcRows');if(!box)return;box.innerHTML=dlcRowHTML(date,qtyValue,false);refreshDlcRemoveButtons();
+}
+function dlcRowHTML(date=iso(today()),qtyValue=1,removable=true){return `<div class="dlcEntry"><label>Date<input class="dlcDate" type="date" required value="${esc(date)}"></label><label>Quantité<div class="quantity compactQty"><button type="button" class="qtyMinus">−</button><input class="dlcQty" type="number" min="1" value="${Math.max(1,+qtyValue||1)}"><button type="button" class="qtyPlus">+</button></div></label><button type="button" class="removeDlcRow ${removable?'':'hidden'}" aria-label="Supprimer cette date">×</button></div>`}
+function refreshDlcRemoveButtons(){const rows=$$('.dlcEntry');rows.forEach(r=>r.querySelector('.removeDlcRow')?.classList.toggle('hidden',rows.length===1))}
+function groupedProducts(list){
+  const m=new Map();for(const p of list){const k=p.barcode||`${p.name}|${p.department}`;if(!m.has(k))m.set(k,{key:k,name:p.name,barcode:p.barcode,department:p.department,note:p.note,items:[]});m.get(k).items.push(p)}return [...m.values()]
+}
+function productGroupHTML(g){
+  const items=[...g.items].sort((a,b)=>String(a.expiry).localeCompare(String(b.expiry)));
+  const total=qty(items.filter(x=>!x.done));
+  return `<div class="productGroup"><div class="productGroupTop"><div class="groupPhoto">${productPhotoHTML(g.barcode,g.name)}</div><div class="pinfo"><b>${esc(g.name)}</b><small>${g.barcode?'EAN '+esc(g.barcode)+' · ':''}${esc(g.department)}</small></div><span class="groupQty">${total?total+' u.':''}</span></div><div class="dlcMiniList">${items.map(p=>{let[s,c]=status(p);return `<div class="dlcMiniRow"><div><span class="badge ${c}">${s}</span><b>${fmt(p.expiry)}</b><small>Quantité : ${+p.quantity||1}</small></div><button data-delete-product="${p.id}">Supprimer</button></div>`}).join('')}</div><button class="addGroupDlc" data-add-date="${items[0]?.id||''}">＋ Ajouter des DLC</button></div>`
 }
 async function setDoneRemote(id,done){
   const payload={retire:done};
@@ -184,12 +218,12 @@ function show(id){
   if(id==='employeesView'){$('codeDisplayPage').textContent=localStorage.getItem(KC)||'582941';loadEmployees()}
   if(id==='departmentsView')loadDepartmentsRemote().then(renderDepartments);if(id==='notificationsView')loadNotifications();if(id==='catalogueView')loadCatalogue();applyRoleUI();render();
 }
-function productHTML(p,check=false){let[s,c]=status(p);return `<div class="product"><div class="picon">${icon(p.department)}</div><div class="pinfo"><b>${esc(p.name)}</b><span class="badge ${c}">${s}</span><small>${fmt(p.expiry)} · ${esc(p.department)}</small><div class="productActions"><button data-add-date="${p.id}">＋ DLC</button><button data-delete-product="${p.id}">Supprimer</button></div></div><span class="qtyText">${p.quantity>1?'x'+p.quantity:''}</span>${check?`<button class="check ${p.done?'done':''}" data-done="${p.id}">${p.done?'✓':''}</button>`:''}</div>`}
+function productHTML(p,check=false){let[s,c]=status(p);return `<div class="product"><div class="picon productThumb">${productPhotoHTML(p.barcode,p.name)}</div><div class="pinfo"><b>${esc(p.name)}</b><span class="badge ${c}">${s}</span><small>${fmt(p.expiry)} · ${esc(p.department)}</small><div class="productActions"><button data-add-date="${p.id}">＋ DLC</button><button data-delete-product="${p.id}">Supprimer</button></div></div><span class="qtyText">${p.quantity>1?'x'+p.quantity:''}</span>${check?`<button class="check ${p.done?'done':''}" data-done="${p.id}">${p.done?'✓':''}</button>`:''}</div>`}
 function render(){
   let t=today();if($('currentDate'))$('currentDate').textContent=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(t);
   if($('todayCount'))$('todayCount').textContent=qty(arr('today'));if($('tomorrowCount'))$('tomorrowCount').textContent=qty(arr('tomorrow'));if($('weekCount'))$('weekCount').textContent=qty(arr('week'));
   let names=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];if($('upcoming'))$('upcoming').innerHTML=[0,1,2,3,4].map(n=>{let d=add(t,n),c=qty(products.filter(p=>!p.done&&p.expiry===iso(d)));return `<div class="day ${n===0?'today':''}"><b>${names[d.getDay()]}</b><strong>${d.getDate()}</strong><span>${c||'0'}</span></div>`}).join('');
-  let q=($('search')?.value||'').toLowerCase();let ps=products.filter(p=>p.name.toLowerCase().includes(q));if(filter!=='all')ps=ps.filter(p=>arr(filter).some(x=>x.id===p.id));if($('productList'))$('productList').innerHTML=ps.length?ps.map(p=>productHTML(p)).join(''):'<div class="card">Aucun produit.</div>';
+  let q=($('search')?.value||'').toLowerCase();let ps=products.filter(p=>p.name.toLowerCase().includes(q)||(p.barcode||'').includes(q));if(filter!=='all')ps=ps.filter(p=>arr(filter).some(x=>x.id===p.id));if($('productList')){const gs=groupedProducts(ps);$('productList').innerHTML=gs.length?gs.map(productGroupHTML).join(''):'<div class="card">Aucun produit.</div>';}
   renderStats();if($('settingsStore'))$('settingsStore').textContent='Proxi - Monéteau';if($('storeName'))$('storeName').textContent='Proxi - Monéteau';
 }
 function openDaily(m){dailyMode=m;let a=arr(m),d=m==='today'?today():add(today(),1);$('dailyTitle').textContent=m==='today'?"À retirer aujourd'hui":'À surveiller demain';$('dailyCount').textContent=qty(a)+' produits';$('dailyDate').textContent='▣ '+new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(d);$('dailyList').innerHTML=a.length?a.map(p=>productHTML(p,true)).join(''):'<div class="card">Aucun produit 🎉</div>';show('dailyView')}
@@ -203,20 +237,20 @@ async function loadCatalogue(){
   if(!db||!magasinId)return;
   const {data,error}=await db.from('catalogue_produits').select('*').eq('magasin_id',magasinId).order('nom',{ascending:true});
   if(error){console.error(error);toast('Catalogue indisponible');return}
-  catalogue=data||[];renderCatalogue();
+  catalogue=data||[];saveCatalogueLocal();renderCatalogue();render();setTimeout(()=>enrichMissingPhotos(),300);
 }
 function renderCatalogue(){
   if(!$('catalogueList'))return;
   const q=($('catalogueSearch')?.value||'').trim().toLowerCase();
   const rows=catalogue.filter(x=>(x.nom||'').toLowerCase().includes(q)||(x.code_barres||'').includes(q));
   $('catalogueCount').textContent=catalogue.length;
-  $('catalogueList').innerHTML=rows.length?rows.map(x=>`<button class="catalogueItem" data-cat-id="${x.id}"><span class="eanIcon"><svg class="eanSvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5v14M7 5v14M10 5v14M14 5v14M17 5v14M20 5v14"/></svg></span><span class="catInfo"><b>${esc(x.nom)}</b><small>EAN ${esc(x.code_barres)}${x.rayon?' · '+esc(x.rayon):''}</small></span><span class="chev">›</span></button>`).join(''):'<div class="card emptyCatalogue"><strong>Aucune référence trouvée</strong><span>Ajoutez un EAN pour qu’il soit reconnu au scan.</span></div>';
+  $('catalogueList').innerHTML=rows.length?rows.map(x=>`<button class="catalogueItem" data-cat-id="${x.id}"><span class="eanIcon cataloguePhotoBox">${x.photo_url?`<img src="${esc(x.photo_url)}" alt="${esc(x.nom)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"><span class="photoFallback" style="display:none">▥</span>`:`<span class="photoFallback">▥</span>`}</span><span class="catInfo"><b>${esc(x.nom)}</b><small>EAN ${esc(x.code_barres)}${x.rayon?' · '+esc(x.rayon):''}</small></span><span class="chev">›</span></button>`).join(''):'<div class="card emptyCatalogue"><strong>Aucune référence trouvée</strong><span>Ajoutez un EAN pour qu’il soit reconnu au scan.</span></div>';
 }
 function fillCatalogueDepartments(selected=''){
   const sel=$('catalogueDepartment');if(!sel)return;const deps=getDepartments();sel.innerHTML='<option value="">Non renseigné</option>'+deps.map(x=>`<option>${esc(x)}</option>`).join('');if(selected)sel.value=selected;
 }
 function openCatalogueEditor(row=null){
-  $('catalogueId').value=row?.id||'';$('catalogueBarcode').value=row?.code_barres||'';$('catalogueName').value=row?.nom||'';$('catalogueNotes').value=row?.notes||'';fillCatalogueDepartments(row?.rayon||'');$('catalogueEditTitle').textContent=row?'Modifier la référence':'Ajouter une référence';$('deleteCatalogueBtn').classList.toggle('hidden',!row);show('catalogueEditView');
+  $('catalogueId').value=row?.id||'';$('catalogueBarcode').value=row?.code_barres||'';$('catalogueName').value=row?.nom||'';$('catalogueNotes').value=row?.notes||'';$('cataloguePhotoUrl').value=row?.photo_url||'';const preview=$('cataloguePhotoPreview');if(row?.photo_url){preview.src=row.photo_url;preview.classList.remove('hidden')}else{preview.removeAttribute('src');preview.classList.add('hidden')}fillCatalogueDepartments(row?.rayon||'');$('catalogueEditTitle').textContent=row?'Modifier la référence':'Ajouter une référence';$('deleteCatalogueBtn').classList.toggle('hidden',!row);show('catalogueEditView');
 }
 
 function startScan(){
@@ -230,15 +264,19 @@ function stopScan(){if(scanner&&window.Quagga){try{Quagga.stop()}catch(e){}scann
 
 $('startBtn').onclick=()=>{$('welcome').classList.add('hidden');$('login').classList.remove('hidden');$('shopCode').value=localStorage.getItem(KC)||'582941'};
 $('loginBtn').onclick=async()=>{let c=$('shopCode').value.trim();if(c.length<4)return toast('Entrez le code magasin');$('loginBtn').disabled=true;try{await connectStore(c);$('login').classList.add('hidden');$('app').classList.remove('hidden');render();toast('Magasin connecté')}catch(e){console.error('Connexion Frais Proxi:',e);const msg=(e?.message||'Connexion impossible').trim();setSync(msg);if(/anonymous sign-ins are disabled/i.test(msg))toast('Connexion anonyme non encore active côté Supabase');else if(/invalid|code magasin|incorrect/i.test(msg))toast('Code magasin incorrect');else toast('Connexion impossible : '+msg.slice(0,80))}finally{$('loginBtn').disabled=false}};
-$$('[data-view]').forEach(b=>b.onclick=()=>show(b.dataset.view));$$('[data-daily]').forEach(b=>b.onclick=()=>openDaily(b.dataset.daily));$('addBtn').onclick=()=>show('addView');$('scanTab').onclick=()=>show('scanView');$('minus').onclick=()=>{$('quantity').value=Math.max(1,+$('quantity').value-1)};$('plusQty').onclick=()=>{$('quantity').value=+$('quantity').value+1};
-$('productForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');let p={name:$('name').value.trim(),quantity:+$('quantity').value,expiry:$('expiry').value,department:$('department').value,note:$('note').value.trim(),barcode:$('barcode').value};try{await addProductSmart(p);if(navigator.onLine)await rememberCatalogueProduct(p);e.target.reset();$('quantity').value=1;$('expiry').value=iso(today());toast('Produit ajouté et mémorisé');show('homeView')}catch(err){console.error(err);toast('Impossible d’ajouter le produit')}};
+$$('[data-view]').forEach(b=>b.onclick=()=>show(b.dataset.view));$$('[data-daily]').forEach(b=>b.onclick=()=>openDaily(b.dataset.daily));$('addBtn').onclick=()=>{resetDlcRows();show('addView')};$('scanTab').onclick=()=>show('scanView');
+$('productForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');const base={name:$('name').value.trim(),department:$('department').value,note:$('note').value.trim(),barcode:$('barcode').value};const rows=$$('.dlcEntry').map(r=>({expiry:r.querySelector('.dlcDate').value,quantity:+r.querySelector('.dlcQty').value||1})).filter(x=>x.expiry);if(!rows.length)return toast('Ajoutez au moins une DLC');try{for(const row of rows)await addProductSmart({...base,...row});if(navigator.onLine)await rememberCatalogueProduct(base);e.target.reset();resetDlcRows();toast(rows.length+' DLC enregistrée'+(rows.length>1?'s':''));show('homeView')}catch(err){console.error(err);toast('Impossible d’ajouter les DLC')}};
 $('search').oninput=render;$$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;$$('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()});
 document.addEventListener('click',async e=>{let a=e.target.closest('[data-add-date]');if(a){let p=products.find(x=>String(x.id)===String(a.dataset.addDate));if(p)addAnotherDate(p);return}let d=e.target.closest('[data-delete-product]');if(d){let p=products.find(x=>String(x.id)===String(d.dataset.deleteProduct));if(p)await deleteProductSmart(p);return}});
+
+$('addDlcRow').onclick=()=>{$('dlcRows').insertAdjacentHTML('beforeend',dlcRowHTML(iso(today()),1,true));refreshDlcRemoveButtons()};
+document.addEventListener('click',e=>{const plus=e.target.closest('.qtyPlus'),minus=e.target.closest('.qtyMinus'),remove=e.target.closest('.removeDlcRow');if(plus){const i=plus.parentElement.querySelector('.dlcQty');i.value=(+i.value||1)+1;return}if(minus){const i=minus.parentElement.querySelector('.dlcQty');i.value=Math.max(1,(+i.value||1)-1);return}if(remove){remove.closest('.dlcEntry').remove();refreshDlcRemoveButtons()}});
+
 document.addEventListener('click',async e=>{let b=e.target.closest('[data-done]');if(!b)return;let p=products.find(x=>x.id==b.dataset.done);if(!p)return;try{await setDoneRemote(p.id,!p.done);openDaily(dailyMode);toast(p.done?'Produit remis en attente':'Produit retiré')}catch(err){console.error(err);toast('Modification impossible')}});
 $('doneAll').onclick=async()=>{let a=arr(dailyMode);try{for(const p of a)await setDoneRemote(p.id,true);toast('Tout est retiré');openDaily(dailyMode)}catch(e){toast('Une erreur est survenue')}};
 $('manualBarcodeBtn').onclick=()=>{let c=prompt('Numéro sous le code-barres :');if(c){stopScan();identifyBarcode(c.trim())}};
 $('teamBtn').onclick=()=>show('employeesView');$('menuBtn').onclick=()=>show('settingsView');
-$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v5.4.json';a.click()};
+$('exportBtn').onclick=()=>{let blob=new Blob([JSON.stringify({store:'Proxi - Monéteau',products},null,2)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='frais-proxi-v5.5.json';a.click()};
 function getDepartments(){return departments.length?departments:['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie']}
 function refreshDepartmentSelect(){let a=getDepartments(),sel=$('department'),cur=sel.value;sel.innerHTML=a.map(x=>`<option>${esc(x)}</option>`).join('');if(a.includes(cur))sel.value=cur}
 async function renderDepartments(){
@@ -278,18 +316,22 @@ $('catalogueSearch').oninput=renderCatalogue;
 $('refreshCatalogue').onclick=()=>loadCatalogue();
 $('newCatalogueBtn').onclick=()=>openCatalogueEditor();
 document.addEventListener('click',e=>{const b=e.target.closest('[data-cat-id]');if(!b)return;const row=catalogue.find(x=>String(x.id)===String(b.dataset.catId));if(row)openCatalogueEditor(row)});
-$('catalogueForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');const id=$('catalogueId').value;const payload={magasin_id:+magasinId,code_barres:$('catalogueBarcode').value.trim(),nom:$('catalogueName').value.trim(),rayon:$('catalogueDepartment').value||null,notes:$('catalogueNotes').value.trim()||null,source:'magasin',updated_at:new Date().toISOString()};let res=id?await db.from('catalogue_produits').update(payload).eq('id',id).eq('magasin_id',magasinId):await db.from('catalogue_produits').upsert(payload,{onConflict:'magasin_id,code_barres'});if(res.error){console.error(res.error);return toast('Impossible d’enregistrer')}toast('Référence enregistrée');await loadCatalogue();show('catalogueView')};
+$('catalogueForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');const id=$('catalogueId').value;const payload={magasin_id:+magasinId,code_barres:$('catalogueBarcode').value.trim(),nom:$('catalogueName').value.trim(),rayon:$('catalogueDepartment').value||null,notes:$('catalogueNotes').value.trim()||null,photo_url:$('cataloguePhotoUrl').value.trim()||null,source:'magasin',updated_at:new Date().toISOString()};let res=id?await db.from('catalogue_produits').update(payload).eq('id',id).eq('magasin_id',magasinId):await db.from('catalogue_produits').upsert(payload,{onConflict:'magasin_id,code_barres'});if(res.error){console.error(res.error);return toast('Impossible d’enregistrer')}toast('Référence enregistrée');await loadCatalogue();show('catalogueView')};
 $('deleteCatalogueBtn').onclick=async()=>{const id=$('catalogueId').value;if(!id)return;if(!confirm('Supprimer cette référence du catalogue ?'))return;const {error}=await db.from('catalogue_produits').delete().eq('id',id).eq('magasin_id',magasinId);if(error)return toast('Suppression impossible');toast('Référence supprimée');await loadCatalogue();show('catalogueView')};
 
-refreshDepartmentSelect();fillCatalogueDepartments();$('expiry').value=iso(today());render();
+$('findCataloguePhotoBtn').onclick=async()=>{const code=$('catalogueBarcode').value.trim();if(!code)return toast('Entrez d’abord le code EAN');$('findCataloguePhotoBtn').disabled=true;toast('Recherche de la photo…');const off=await lookupOpenFoodFacts(code);$('findCataloguePhotoBtn').disabled=false;if(!off?.photo_url)return toast('Aucune photo trouvée pour cet EAN');$('cataloguePhotoUrl').value=off.photo_url;$('cataloguePhotoPreview').src=off.photo_url;$('cataloguePhotoPreview').classList.remove('hidden');if(!$('catalogueName').value.trim()&&off.nom)$('catalogueName').value=off.nom;toast('Photo trouvée')};
+$('cataloguePhotoUrl').oninput=()=>{const u=$('cataloguePhotoUrl').value.trim(),img=$('cataloguePhotoPreview');if(u){img.src=u;img.classList.remove('hidden')}else img.classList.add('hidden')};
+
+
+refreshDepartmentSelect();fillCatalogueDepartments();resetDlcRows();renderCatalogue();render();
 window.addEventListener('focus',()=>{flushQueue();loadProducts(true)});window.addEventListener('online',()=>{toast('Connexion retrouvée — synchronisation…');flushQueue()});window.addEventListener('beforeunload',stopScan);
 
 (async()=>{
   try{
     if(!db)return;
     const {data:{session}}=await db.auth.getSession();
-    if(session && magasinId){await loadMyAccess();if(currentAccess?.actif===false){localStorage.removeItem(KM);magasinId=null;return}await loadDepartmentsRemote();$('welcome').classList.add('hidden');$('login').classList.add('hidden');$('app').classList.remove('hidden');await loadProducts(true);startSyncTimer();applyRoleUI();render()}
+    if(session && magasinId){await loadMyAccess();if(currentAccess?.actif===false){localStorage.removeItem(KM);magasinId=null;return}await loadDepartmentsRemote();await loadCatalogue();$('welcome').classList.add('hidden');$('login').classList.add('hidden');$('app').classList.remove('hidden');await loadProducts(true);startSyncTimer();applyRoleUI();render()}
   }catch(e){console.error(e)}
 })();
 
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=54').catch(console.warn))}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=55').catch(console.warn))}
