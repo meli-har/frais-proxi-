@@ -237,3 +237,29 @@ nav{height:78px;padding:7px 10px calc(7px + env(safe-area-inset-bottom));box-sha
   height:38px !important;
   font-size:20px !important;
 }
+/* V5.7.2 - statistiques accueil */
+#homeView .homeStats{
+  border-radius:18px !important;
+  padding:10px 4px !important;
+  min-height:82px !important;
+}
+
+#homeView .homeStats > div{
+  padding:4px 3px !important;
+}
+
+#homeView .homeStats span{
+  font-size:18px !important;
+  margin-bottom:3px !important;
+}
+
+#homeView .homeStats strong{
+  font-size:23px !important;
+  line-height:1 !important;
+}
+
+#homeView .homeStats small{
+  font-size:10px !important;
+  line-height:1.1 !important;
+  margin-top:5px !important;
+}
