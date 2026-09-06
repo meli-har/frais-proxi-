@@ -318,3 +318,10 @@ box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
   z-index:10 !important;
   object-fit:contain !important;
 }
+/* Photo du rayon frais dans la banderole */
+#homeView .heroVisualV57{
+  background-image:url("rayon-frais.png") !important;
+  background-position:center !important;
+  background-size:cover !important;
+  background-repeat:no-repeat !important;
+}
