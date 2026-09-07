@@ -333,3 +333,15 @@ box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
   margin-left:8px !important;
   vertical-align:middle !important;
 }
+/* Correction logo en-tête */
+.top .headerLeclercLogo{
+  width:42px !important;
+  height:42px !important;
+  max-width:42px !important;
+  max-height:42px !important;
+  position:static !important;
+  display:inline-block !important;
+  object-fit:contain !important;
+  margin-left:8px !important;
+  flex:none !important;
+}
