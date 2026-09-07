@@ -325,3 +325,11 @@ box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
   background-size:cover !important;
   background-repeat:no-repeat !important;
 }
+/* Logo E.Leclerc dans l'en-tête */
+.headerLeclercLogo{
+  width:42px !important;
+  height:42px !important;
+  object-fit:contain !important;
+  margin-left:8px !important;
+  vertical-align:middle !important;
+}
