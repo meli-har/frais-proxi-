@@ -412,3 +412,54 @@ document.addEventListener('click', e => {
   const b = e.target.closest('[data-view="planningView"]');
   if(b) setTimeout(renderPlanningDlc, 50);
 });
+// Correction Planning DLC
+function renderPlanningDlc(){
+  const box = document.getElementById('planningList');
+  if(!box) return;
+
+  const liste = (products || [])
+    .filter(p => p && p.expiry && !p.done)
+    .sort((a,b) => String(a.expiry).localeCompare(String(b.expiry)));
+
+  if(!liste.length){
+    box.innerHTML = '<div class="card">Aucune DLC enregistrée.</div>';
+    return;
+  }
+
+  const groupes = {};
+  liste.forEach(p => {
+    if(!groupes[p.expiry]) groupes[p.expiry] = [];
+    groupes[p.expiry].push(p);
+  });
+
+  box.innerHTML = Object.keys(groupes).map(date => {
+    const d = new Date(date + 'T12:00:00');
+
+    const titre = new Intl.DateTimeFormat('fr-FR',{
+      weekday:'long',
+      day:'numeric',
+      month:'long',
+      year:'numeric'
+    }).format(d);
+
+    const lignes = groupes[date].map(p => `
+      <div class="planningProduct">
+        <div>
+          <b>${esc(p.name || 'Produit')}</b>
+          <small>${esc(p.department || 'Sans rayon')}</small>
+        </div>
+        <strong>${Number(p.quantity || 1)} u.</strong>
+      </div>
+    `).join('');
+
+    return `
+      <section class="planningDay">
+        <div class="planningDayHead">
+          <h3>${titre}</h3>
+          <span>${qty(groupes[date])} produit(s)</span>
+        </div>
+        ${lignes}
+      </section>
+    `;
+  }).join('');
+}
