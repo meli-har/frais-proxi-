@@ -351,3 +351,64 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
 
 // V5.6 — actions dynamiques de l'accueil
 document.addEventListener('click',e=>{const b=e.target.closest('#homeRecent [data-add-date]');if(!b)return;const p=products.find(x=>String(x.id)===String(b.dataset.addDate));if(p)addAnotherDate(p)});
+// Planning DLC - liste complète jour par jour
+function renderPlanningDlc(){
+  const box = document.getElementById('planningList');
+  if(!box) return;
+
+  const liste = (products || [])
+    .filter(p => p && p.dlc && !p.retire)
+    .sort((a,b) => String(a.dlc).localeCompare(String(b.dlc)));
+
+  if(!liste.length){
+    box.innerHTML = '<div class="card"><p>Aucune DLC enregistrée.</p></div>';
+    return;
+  }
+
+  const groupes = {};
+  liste.forEach(p => {
+    if(!groupes[p.dlc]) groupes[p.dlc] = [];
+    groupes[p.dlc].push(p);
+  });
+
+  const esc = v => String(v ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;');
+
+  box.innerHTML = Object.keys(groupes).map(date => {
+    const d = new Date(date + 'T12:00:00');
+    const titre = new Intl.DateTimeFormat('fr-FR',{
+      weekday:'long',
+      day:'numeric',
+      month:'long',
+      year:'numeric'
+    }).format(d);
+
+    const lignes = groupes[date].map(p => `
+      <div class="planningProduct">
+        <div>
+          <b>${esc(p.nom || 'Produit')}</b>
+          <small>${esc(p.rayon || 'Sans rayon')}</small>
+        </div>
+        <strong>${Number(p.quantite || 1)} unité${Number(p.quantite || 1) > 1 ? 's' : ''}</strong>
+      </div>
+    `).join('');
+
+    return `
+      <section class="planningDay">
+        <div class="planningDayHead">
+          <h3>${titre}</h3>
+          <span>${groupes[date].length} produit${groupes[date].length > 1 ? 's' : ''}</span>
+        </div>
+        ${lignes}
+      </section>
+    `;
+  }).join('');
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-view="planningView"]');
+  if(b) setTimeout(renderPlanningDlc, 50);
+});
