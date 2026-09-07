@@ -335,9 +335,9 @@ box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
 }
 /* Correction logo en-tête */
 .top .headerLeclercLogo{
-  width:42px !important;
+  width:65px !important;
   height:42px !important;
-  max-width:42px !important;
+  max-width:65px !important;
   max-height:42px !important;
   position:static !important;
   display:inline-block !important;
