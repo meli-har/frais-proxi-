@@ -345,3 +345,35 @@ box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
   margin-left:8px !important;
   flex:none !important;
 }
+/* Planning DLC - choix des jours */
+#planningView .planningDateControls{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:10px !important;
+  margin:18px 0 24px !important;
+}
+
+#planningView .planningDateBtn{
+  width:100% !important;
+  min-height:52px !important;
+  border-radius:18px !important;
+  font-size:17px !important;
+}
+
+#planningView .planningDateLabel{
+  grid-column:1 / -1 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:10px !important;
+  background:#fff !important;
+  border-radius:18px !important;
+  padding:10px 14px !important;
+  font-size:16px !important;
+  font-weight:700 !important;
+}
+
+#planningView #planningDatePicker{
+  max-width:145px !important;
+  font-size:15px !important;
+}
