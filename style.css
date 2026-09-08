@@ -430,3 +430,12 @@ box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
   font-weight:700 !important;
   cursor:pointer !important;
 }
+/* Logo E.Leclerc du pied de page */
+#homeView .footerLeclercLogo{
+  width:110px !important;
+  height:auto !important;
+  max-width:110px !important;
+  max-height:45px !important;
+  object-fit:contain !important;
+  display:block !important;
+}
