@@ -439,3 +439,15 @@ box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
   object-fit:contain !important;
   display:block !important;
 }
+/* Texte de la banderole */
+#homeView .heroVisualV57 em{
+  position:absolute !important;
+  top:22px !important;
+  left:18px !important;
+  z-index:5 !important;
+  font-size:20px !important;
+  line-height:1.05 !important;
+  color:#fff !important;
+  text-shadow:0 2px 6px rgba(0,0,0,.45) !important;
+  max-width:210px !important;
+}
