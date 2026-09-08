@@ -509,6 +509,7 @@ function renderPlanningDlc(dateChoisie){
         <small>${esc(p.department || 'Sans rayon')}</small>
       </div>
       <strong>${Number(p.quantity || 1)} u.</strong>
+    <button type="button" class="planningDoneBtn" data-done="${p.id}">✓ Retiré</button>
     </div>
   `).join('');
 
