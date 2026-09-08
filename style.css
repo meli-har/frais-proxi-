@@ -442,8 +442,8 @@ box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
 /* Texte de la banderole */
 #homeView .heroVisualV57 em{
   position:absolute !important;
-  top:38px !important;
-  left:45px !important;
+  top:105px !important;
+  left:65px !important;
   z-index:5 !important;
   font-size:20px !important;
   line-height:1.05 !important;
