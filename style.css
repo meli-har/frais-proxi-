@@ -455,3 +455,25 @@ padding:6px 10px !important;
 border-radius:12px !important;
 display:none !important;
 }
+/* Pied de page E.Leclerc */
+#homeView .homeFooterBrand{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:18px 15px 105px !important;
+}
+
+#homeView .footerLeclerc{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+}
+
+#homeView .footerLeclercLogo{
+  width:130px !important;
+  max-width:130px !important;
+  height:auto !important;
+  max-height:none !important;
+  object-fit:contain !important;
+  display:block !important;
+}
