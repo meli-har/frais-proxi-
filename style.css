@@ -399,3 +399,6 @@ box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
 #planningView .planningDateLabel input{
   margin-left:auto !important;
 }
+#planningView .planningDateBtn[data-planning-offset="1"]{
+  display:none !important;
+}
