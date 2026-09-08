@@ -463,3 +463,81 @@ function renderPlanningDlc(){
     `;
   }).join('');
 }
+// Planning DLC avec choix du jour
+function planningDateIso(offset=0){
+  const d=new Date();
+  d.setHours(12,0,0,0);
+  d.setDate(d.getDate()+offset);
+  return d.getFullYear()+'-'+
+    String(d.getMonth()+1).padStart(2,'0')+'-'+
+    String(d.getDate()).padStart(2,'0');
+}
+
+function renderPlanningDlc(dateChoisie){
+  const box=document.getElementById('planningList');
+  if(!box) return;
+
+  const date=dateChoisie || planningDateIso(0);
+  const picker=document.getElementById('planningDatePicker');
+  if(picker) picker.value=date;
+
+  const liste=(products || []).filter(p =>
+    p && p.expiry===date && !p.done
+  );
+
+  const d=new Date(date+'T12:00:00');
+  const titre=new Intl.DateTimeFormat('fr-FR',{
+    weekday:'long',
+    day:'numeric',
+    month:'long',
+    year:'numeric'
+  }).format(d);
+
+  if(!liste.length){
+    box.innerHTML=`
+      <section class="planningDay">
+        <div class="planningDayHead"><h3>${titre}</h3></div>
+        <div class="card">✅ Aucun produit à retirer ce jour-là.</div>
+      </section>`;
+    return;
+  }
+
+  const lignes=liste.map(p=>`
+    <div class="planningProduct">
+      <div>
+        <b>${esc(p.name || 'Produit')}</b>
+        <small>${esc(p.department || 'Sans rayon')}</small>
+      </div>
+      <strong>${Number(p.quantity || 1)} u.</strong>
+    </div>
+  `).join('');
+
+  box.innerHTML=`
+    <section class="planningDay">
+      <div class="planningDayHead">
+        <h3>${titre}</h3>
+        <span>${liste.length} produit(s)</span>
+      </div>
+      ${lignes}
+    </section>`;
+}
+
+document.addEventListener('click',e=>{
+  const jour=e.target.closest('[data-planning-offset]');
+  if(jour){
+    renderPlanningDlc(
+      planningDateIso(Number(jour.dataset.planningOffset || 0))
+    );
+  }
+
+  const planning=e.target.closest('[data-view="planningView"]');
+  if(planning){
+    setTimeout(()=>renderPlanningDlc(planningDateIso(0)),50);
+  }
+});
+
+document.addEventListener('change',e=>{
+  if(e.target.id==='planningDatePicker'){
+    renderPlanningDlc(e.target.value);
+  }
+});
