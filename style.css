@@ -402,3 +402,31 @@ box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
 #planningView .planningDateBtn[data-planning-offset="1"]{
   display:none !important;
 }
+/* Bouton Retiré dans le Planning DLC */
+#planningView .planningProduct{
+  display:flex !important;
+  align-items:center !important;
+  gap:12px !important;
+  padding:14px !important;
+  margin:10px 0 !important;
+  background:#fff !important;
+  border-radius:16px !important;
+}
+
+#planningView .planningProduct > div{
+  flex:1 !important;
+  min-width:0 !important;
+}
+
+#planningView .planningDoneBtn{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-width:92px !important;
+  height:40px !important;
+  padding:0 14px !important;
+  border:0 !important;
+  border-radius:12px !important;
+  font-weight:700 !important;
+  cursor:pointer !important;
+}
