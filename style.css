@@ -377,3 +377,25 @@ box-shadow:0 2px 8px rgba(0,0,0,.15) !important;
   max-width:145px !important;
   font-size:15px !important;
 }
+/* Planning DLC - alignement propre */
+#planningView .planningFilters{
+  display:grid !important;
+  grid-template-columns:1fr 1fr !important;
+  gap:10px !important;
+  margin:18px 0 24px !important;
+}
+
+#planningView .planningDateBtn{
+  width:100% !important;
+  min-height:52px !important;
+}
+
+#planningView .planningDateLabel{
+  grid-column:1 / -1 !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+}
+
+#planningView .planningDateLabel input{
+  margin-left:auto !important;
+}
