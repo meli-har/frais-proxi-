@@ -477,3 +477,28 @@ display:none !important;
   object-fit:contain !important;
   display:block !important;
 }
+/* V5.7.10 - pied de page mieux équilibré */
+#homeView .homeFooterBrand{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:space-between !important;
+  gap:25px !important;
+  max-width:620px !important;
+  margin:0 auto !important;
+  padding:18px 28px 105px !important;
+}
+
+#homeView .footerLeclerc{
+  flex:0 0 auto !important;
+}
+
+#homeView .footerLeclercLogo{
+  width:135px !important;
+  max-width:135px !important;
+}
+
+#homeView .homeSlogan{
+  flex:0 1 260px !important;
+  text-align:center !important;
+  margin:0 !important;
+}
