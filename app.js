@@ -769,3 +769,49 @@ if(productDetailBackBtn){
     });
   });
 }
+const saveRayonBtn = $('productDetailSaveRayonBtn');
+
+if(saveRayonBtn){
+  saveRayonBtn.addEventListener('click', async () => {
+    if(!currentProductDetail) return;
+
+    const select = $('productDetailRayonSelect');
+    const nouveauRayon = select?.value;
+
+    if(!nouveauRayon) return;
+
+    saveRayonBtn.disabled = true;
+    saveRayonBtn.textContent = 'Enregistrement...';
+
+    const { error } = await supabase
+      .from('catalogue_produits')
+      .update({ rayon: nouveauRayon })
+      .eq('id', currentProductDetail.id);
+
+    if(error){
+      alert('Erreur pendant l’enregistrement du rayon.');
+      saveRayonBtn.disabled = false;
+      saveRayonBtn.textContent = 'Enregistrer le rayon';
+      return;
+    }
+
+    currentProductDetail.rayon = nouveauRayon;
+
+    const produitCatalogue = catalogue.find(
+      x => String(x.id) === String(currentProductDetail.id)
+    );
+
+    if(produitCatalogue){
+      produitCatalogue.rayon = nouveauRayon;
+    }
+
+    saveRayonBtn.disabled = false;
+    saveRayonBtn.textContent = 'Rayon enregistré ✓';
+
+    renderCatalogue();
+
+    setTimeout(() => {
+      saveRayonBtn.textContent = 'Enregistrer le rayon';
+    }, 1500);
+  });
+}
