@@ -543,10 +543,10 @@ document.addEventListener('change',e=>{
   }
 });
 let currentProductDetail = null;
-
+let catalogueScrollY = 0;
 function openProductDetail(row){
   if(!row) return;
-
+catalogueScrollY = window.scrollY;
   currentProductDetail = row;
 
   $('productDetailName').textContent = row.nom || 'Produit';
@@ -752,3 +752,20 @@ function renderCatalogue(){
 
   }).join('');
 }  
+const productDetailBackBtn =
+  document.querySelector('#productDetailView [data-view="catalogueView"]');
+
+if(productDetailBackBtn){
+  productDetailBackBtn.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    show('catalogueView');
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.scrollTo(0, catalogueScrollY);
+      });
+    });
+  });
+}
