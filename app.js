@@ -552,7 +552,19 @@ function openProductDetail(row){
   $('productDetailName').textContent = row.nom || 'Produit';
   $('productDetailBarcode').textContent =
     'EAN ' + (row.code_barres || 'Non renseigné');
+const rayonSelect = $('productDetailRayonSelect');
 
+if(rayonSelect){
+  rayonSelect.innerHTML = departments
+    .map(r => `<option value="${esc(r)}">${esc(r)}</option>`)
+    .join('');
+
+  const rayonActuel = row.rayon || autoCatalogueRayon(row.nom || '');
+
+  if(departments.includes(rayonActuel)){
+    rayonSelect.value = rayonActuel;
+  }
+}
   const img = $('productDetailPhoto');
 
   if(row.photo_url){
