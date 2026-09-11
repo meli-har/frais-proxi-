@@ -630,7 +630,7 @@ function autoCatalogueRayon(name=''){
     return 'Charcuterie';
   }
 
-  if(/boeuf|bœuf|steak|veau|agneau|porc|poulet|dinde|canard|escalope|viande|chipolata|merguez|côte|cote/.test(n)){
+  if(/boeuf|bœuf|steak|veau|agneau|porc|poulet|dinde|canard|volaille|escalope|viande|chipolata|merguez|côte|cote|haché|hache|\bplt\b|\bdde\b|esc\.?\s*plt|esc\.?\s*dde/.test(n)){
     return 'Viande';
   }
 
