@@ -783,7 +783,7 @@ if(saveRayonBtn){
     saveRayonBtn.disabled = true;
     saveRayonBtn.textContent = 'Enregistrement...';
 
-    const { error } = await supabase
+    const { error } = await db
       .from('catalogue_produits')
       .update({ rayon: nouveauRayon })
       .eq('id', currentProductDetail.id);
