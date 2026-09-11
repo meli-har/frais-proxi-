@@ -328,7 +328,7 @@ document.addEventListener('click',async e=>{
 $('catalogueSearch').oninput=renderCatalogue;
 $('refreshCatalogue').onclick=()=>loadCatalogue();
 $('newCatalogueBtn').onclick=()=>openCatalogueEditor();
-document.addEventListener('click',e=>{const b=e.target.closest('[data-cat-id]');if(!b)return;const row=catalogue.find(x=>String(x.id)===String(b.dataset.catId));if(row)openCatalogueEditor(row)});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-cat-id]');if(!b)return;const row=catalogue.find(x=>String(x.id)===String(b.dataset.catId));if(row)openProductDetail(row)
 $('catalogueForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');const id=$('catalogueId').value;const payload={magasin_id:+magasinId,code_barres:$('catalogueBarcode').value.trim(),nom:$('catalogueName').value.trim(),rayon:$('catalogueDepartment').value||null,notes:$('catalogueNotes').value.trim()||null,photo_url:$('cataloguePhotoUrl').value.trim()||null,source:'magasin',updated_at:new Date().toISOString()};let res=id?await db.from('catalogue_produits').update(payload).eq('id',id).eq('magasin_id',magasinId):await db.from('catalogue_produits').upsert(payload,{onConflict:'magasin_id,code_barres'});if(res.error){console.error(res.error);return toast('Impossible d’enregistrer')}toast('Référence enregistrée');await loadCatalogue();show('catalogueView')};
 $('deleteCatalogueBtn').onclick=async()=>{const id=$('catalogueId').value;if(!id)return;if(!confirm('Supprimer cette référence du catalogue ?'))return;const {error}=await db.from('catalogue_produits').delete().eq('id',id).eq('magasin_id',magasinId);if(error)return toast('Suppression impossible');toast('Référence supprimée');await loadCatalogue();show('catalogueView')};
 
@@ -542,3 +542,81 @@ document.addEventListener('change',e=>{
     renderPlanningDlc(e.target.value);
   }
 });
+let currentProductDetail = null;
+
+function openProductDetail(row){
+  if(!row) return;
+
+  currentProductDetail = row;
+
+  $('productDetailName').textContent = row.nom || 'Produit';
+  $('productDetailBarcode').textContent =
+    'EAN ' + (row.code_barres || 'Non renseigné');
+
+  const img = $('productDetailPhoto');
+
+  if(row.photo_url){
+    img.src = row.photo_url;
+    img.classList.remove('hidden');
+  }else{
+    img.removeAttribute('src');
+    img.classList.add('hidden');
+  }
+
+  const dlcs = products
+    .filter(p => String(p.barcode || '') === String(row.code_barres || ''))
+    .sort((a,b) => String(a.expiry).localeCompare(String(b.expiry)));
+
+  $('productDetailDlcList').innerHTML = dlcs.length
+    ? dlcs.map(p => {
+        const [label, color] = status(p);
+
+        return `
+          <div class="productDetailDlcRow">
+            <div>
+              <span class="badge ${color}">${label}</span>
+              <b>${fmt(p.expiry)}</b>
+              <small>Quantité : ${p.quantity || 1}</small>
+            </div>
+
+            <button type="button" data-delete-product="${p.id}">
+              Supprimer
+            </button>
+          </div>
+        `;
+      }).join('')
+    : '<div class="card">Aucune DLC enregistrée pour cette référence.</div>';
+
+  show('productDetailView');
+}
+
+$('productDetailAddDlcBtn').onclick = () => {
+  if(!currentProductDetail) return;
+
+  const row = currentProductDetail;
+  const existing = products.find(
+    p => String(p.barcode || '') === String(row.code_barres || '')
+  );
+
+  if(existing){
+    addAnotherDate(existing);
+    return;
+  }
+
+  $('name').value = row.nom || '';
+  $('barcode').value = row.code_barres || '';
+
+  refreshDepartmentSelect();
+
+  if(row.rayon){
+    const options = [...$('department').options].map(o => o.value);
+    if(options.includes(row.rayon)){
+      $('department').value = row.rayon;
+    }
+  }
+
+  $('note').value = row.notes || '';
+  resetDlcRows();
+  show('addView');
+};
+  
