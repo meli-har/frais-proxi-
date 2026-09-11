@@ -671,7 +671,7 @@ function renderCatalogue(){
   const groups = {};
 
   rows.forEach(x => {
-    const const rayon = autoCatalogueRayon(x.nom || ''); || 'Non renseigné';
+    const const rayon = autoCatalogueRayon(x.nom || ''); 
 
     if(!groups[rayon]){
       groups[rayon] = [];
