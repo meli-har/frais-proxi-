@@ -619,4 +619,83 @@ $('productDetailAddDlcBtn').onclick = () => {
   resetDlcRows();
   show('addView');
 };
-  
+/* ===== CATALOGUE TRIÉ PAR RAYON ===== */
+
+function renderCatalogue(){
+  const list = $('catalogueList');
+  if(!list) return;
+
+  const q = ($('catalogueSearch')?.value || '').trim().toLowerCase();
+
+  const rows = catalogue.filter(x =>
+    (x.nom || '').toLowerCase().includes(q) ||
+    String(x.code_barres || '').includes(q)
+  );
+
+  $('catalogueCount').textContent = catalogue.length;
+
+  if(!rows.length){
+    list.innerHTML = '<p class="muted">Aucun produit trouvé.</p>';
+    return;
+  }
+
+  const groups = {};
+
+  rows.forEach(x => {
+    const rayon = (x.rayon || 'Non renseigné').trim() || 'Non renseigné';
+
+    if(!groups[rayon]){
+      groups[rayon] = [];
+    }
+
+    groups[rayon].push(x);
+  });
+
+  const rayonOrder = [...departments, 'Non renseigné'];
+
+  const rayons = Object.keys(groups).sort((a,b) => {
+    const ia = rayonOrder.indexOf(a);
+    const ib = rayonOrder.indexOf(b);
+
+    if(ia !== -1 && ib !== -1) return ia - ib;
+    if(ia !== -1) return -1;
+    if(ib !== -1) return 1;
+
+    return a.localeCompare(b, 'fr');
+  });
+
+  list.innerHTML = rayons.map(rayon => {
+
+    const items = groups[rayon].sort((a,b) =>
+      (a.nom || '').localeCompare(b.nom || '', 'fr')
+    );
+
+    return `
+      <section class="catalogueRayonGroup">
+
+        <h3 class="catalogueRayonTitle">
+          ${esc(rayon)}
+          <span>${items.length}</span>
+        </h3>
+
+        <div class="catalogueRayonItems">
+
+          ${items.map(x => `
+            <button class="catalogueItem" data-cat-id="${x.id}">
+
+              ${productPhotoHTML(x.code_barres, x.nom || '')}
+
+              <span class="catalogueItemText">
+                <b>${esc(x.nom || 'Produit')}</b>
+                <small>EAN ${esc(x.code_barres || '')}</small>
+              </span>
+
+            </button>
+          `).join('')}
+
+        </div>
+      </section>
+    `;
+
+  }).join('');
+}  
