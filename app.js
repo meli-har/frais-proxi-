@@ -619,6 +619,35 @@ $('productDetailAddDlcBtn').onclick = () => {
   resetDlcRows();
   show('addView');
 };
+function autoCatalogueRayon(name=''){
+  const n = name.toLowerCase();
+
+  if(/yaourt|yog|fromage|crème|creme|beurre|lait|dessert|mozzarella|emmental|camembert|chèvre|chevre|skyr/.test(n)){
+    return 'Crèmerie';
+  }
+
+  if(/jambon|saucisson|charcut|mortadelle|chorizo|salami|rosette|pâté|pate|rillettes|lardon|bacon/.test(n)){
+    return 'Charcuterie';
+  }
+
+  if(/boeuf|bœuf|steak|veau|agneau|porc|poulet|dinde|canard|escalope|viande|chipolata|merguez|côte|cote/.test(n)){
+    return 'Viande';
+  }
+
+  if(/saumon|thon|crevette|poisson|cabillaud|colin|truite|surimi|moules|crabe/.test(n)){
+    return 'Poissonnerie';
+  }
+
+  if(/pizza|quiche|lasagne|paella|pasta|pâte|pate|gnocchi|salade|sandwich|burger|wrap|box|tortellini|ravioli|traiteur/.test(n)){
+    return 'Traiteur';
+  }
+
+  if(/fruit|légume|legume|tomate|salade verte|fraise|melon|courgette|poivron/.test(n)){
+    return 'Fruits & Légumes';
+  }
+
+  return 'Autres';
+}
 /* ===== CATALOGUE TRIÉ PAR RAYON ===== */
 
 function renderCatalogue(){
@@ -642,7 +671,7 @@ function renderCatalogue(){
   const groups = {};
 
   rows.forEach(x => {
-    const rayon = (x.rayon || 'Non renseigné').trim() || 'Non renseigné';
+    const const rayon = autoCatalogueRayon(x.nom || ''); || 'Non renseigné';
 
     if(!groups[rayon]){
       groups[rayon] = [];
