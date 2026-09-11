@@ -592,3 +592,21 @@ display:none !important;
   font-size:17px;
   font-weight:800;
 }
+/* ===== CORRECTION TITRE FICHE PRODUIT ===== */
+
+#productDetailView .pageHead{
+  background:transparent;
+  color:#082f54;
+  padding:18px 20px 6px;
+}
+
+#productDetailView .pageHead h1{
+  color:#082f54;
+  font-size:24px;
+  font-weight:800;
+}
+
+#productDetailView .pageHead button{
+  color:#082f54;
+  background:transparent;
+}
