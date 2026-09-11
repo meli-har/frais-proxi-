@@ -608,12 +608,15 @@ $('productDetailAddDlcBtn').onclick = () => {
 
   refreshDepartmentSelect();
 
-  if(row.rayon){
-    const options = [...$('department').options].map(o => o.value);
-    if(options.includes(row.rayon)){
-      $('department').value = row.rayon;
-    }
-  }
+  const rayonAuto = autoCatalogueRayon(row.nom || '');
+
+const options = [...$('department').options].map(o => o.value);
+
+if(options.includes(rayonAuto)){
+  $('department').value = rayonAuto;
+}else if(row.rayon && options.includes(row.rayon)){
+  $('department').value = row.rayon;
+}
 
   $('note').value = row.notes || '';
   resetDlcRows();
