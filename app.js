@@ -623,30 +623,39 @@ if(options.includes(rayonAuto)){
   show('addView');
 };
 function autoCatalogueRayon(name=''){
-  const n = name.toLowerCase();
+  const n = String(name || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 
-  if(/yaourt|yog|fromage|crème|creme|beurre|lait|dessert|mozzarella|emmental|camembert|chèvre|chevre|skyr/.test(n)){
-    return 'Crèmerie';
-  }
-
-  if(/jambon|saucisson|charcut|mortadelle|chorizo|salami|rosette|pâté|pate|rillettes|lardon|bacon/.test(n)){
-    return 'Charcuterie';
-  }
-
-  if(/boeuf|bœuf|steak|veau|agneau|porc|poulet|dinde|canard|volaille|escalope|viande|chipolata|merguez|côte|cote|haché|hache|\bplt\b|\bdde\b|esc\.?\s*plt|esc\.?\s*dde/.test(n)){
-    return 'Viande';
-  }
-
-  if(/saumon|thon|crevette|poisson|cabillaud|colin|truite|surimi|moules|crabe/.test(n)){
-    return 'Poissonnerie';
-  }
-
-  if(/pizza|quiche|lasagne|paella|pasta|pâte|pate|gnocchi|salade|sandwich|burger|wrap|box|tortellini|ravioli|traiteur/.test(n)){
+  /* TRAITEUR : à tester avant poulet/viande */
+  if(/baguette|sandwich|sdw|club|wrap|burger|pizza|quiche|croque|salade|slde|ricebox|box|paella|lasagne|lasagna|ravioli|tortellini|gnocchi|taboule|couscous|feuillete|crepe|galette|assortiment asiatique|plat prepare/.test(n)){
     return 'Traiteur';
   }
 
-  if(/fruit|légume|legume|tomate|salade verte|fraise|melon|courgette|poivron/.test(n)){
-    return 'Fruits & Légumes';
+  /* CHARCUTERIE */
+  if(/jambon|\bjb\b|jbon|jamb|saucisson|salami|chorizo|mortadelle|rosette|rillettes|lardon|bacon|charcut|pate|aoste|jambon cru|\bcru\b/.test(n)){
+    return 'Charcuterie';
+  }
+
+  /* POISSONNERIE */
+  if(/saumon|thon|truite|cabillaud|colin|crevette|poisson|surimi|coraya|crabe|moule|huitre|sardine|maquereau/.test(n)){
+    return 'Poissonnerie';
+  }
+
+  /* BOUCHERIE / VIANDE */
+  if(/boeuf|bœuf|steak|veau|agneau|porc|poulet|plet|dinde|\bdde\b|canard|volaille|escalope|viande|chipolata|merguez|hache|filet plet|filet poulet/.test(n)){
+    return 'Boucherie';
+  }
+
+  /* CREMERIE */
+  if(/yaourt|\byrt\b|yog|skyr|fromage|from\.|fr\.blc|fromage blanc|creme|\bcf\b|beurre|\bbeur\b|lait|faisselle|mozzarella|emmental|camembert|comte|chevre|mascarpone|apericube|aperivrais|mousse choco|dessert lacte/.test(n)){
+    return 'Crèmerie';
+  }
+
+  /* FRAIS */
+  if(/fruit|legume|tomate|carotte|pomme|cerise|fraise|melon|courgette|poivron|compote/.test(n)){
+    return 'Frais';
   }
 
   return 'Autres';
