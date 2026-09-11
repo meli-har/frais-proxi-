@@ -328,7 +328,7 @@ document.addEventListener('click',async e=>{
 $('catalogueSearch').oninput=renderCatalogue;
 $('refreshCatalogue').onclick=()=>loadCatalogue();
 $('newCatalogueBtn').onclick=()=>openCatalogueEditor();
-document.addEventListener('click',e=>{const b=e.target.closest('[data-cat-id]');if(!b)return;const row=catalogue.find(x=>String(x.id)===String(b.dataset.catId));if(row)openProductDetail(row)
+document.addEventListener('click',e=>{const b=e.target.closest('[data-cat-id]');if(!b)return;const row=catalogue.find(x=>String(x.id)===String(b.dataset.catId));if(row)openProductDetail(row)});
 $('catalogueForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');const id=$('catalogueId').value;const payload={magasin_id:+magasinId,code_barres:$('catalogueBarcode').value.trim(),nom:$('catalogueName').value.trim(),rayon:$('catalogueDepartment').value||null,notes:$('catalogueNotes').value.trim()||null,photo_url:$('cataloguePhotoUrl').value.trim()||null,source:'magasin',updated_at:new Date().toISOString()};let res=id?await db.from('catalogue_produits').update(payload).eq('id',id).eq('magasin_id',magasinId):await db.from('catalogue_produits').upsert(payload,{onConflict:'magasin_id,code_barres'});if(res.error){console.error(res.error);return toast('Impossible d’enregistrer')}toast('Référence enregistrée');await loadCatalogue();show('catalogueView')};
 $('deleteCatalogueBtn').onclick=async()=>{const id=$('catalogueId').value;if(!id)return;if(!confirm('Supprimer cette référence du catalogue ?'))return;const {error}=await db.from('catalogue_produits').delete().eq('id',id).eq('magasin_id',magasinId);if(error)return toast('Suppression impossible');toast('Référence supprimée');await loadCatalogue();show('catalogueView')};
 
