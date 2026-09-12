@@ -695,3 +695,12 @@ body{
   max-width:100%;
   height:auto;
 }
+/* ===== SUPPRESSION DU GROS LOGO BAS ACCUEIL ===== */
+
+#homeView .footerLeclerc{
+  display:none !important;
+}
+
+#homeView .footerLeclerc img{
+  display:none !important;
+}
