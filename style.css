@@ -704,3 +704,11 @@ body{
 #homeView .footerLeclerc img{
   display:none !important;
 }
+/* Masquer le footer Leclerc où qu'il soit */
+.footerLeclerc{
+  display:none !important;
+}
+
+.footerLeclerc img{
+  display:none !important;
+}
