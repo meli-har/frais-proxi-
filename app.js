@@ -705,6 +705,49 @@ if(
 ){
   return 'Boucherie';
 }
+ /* ===== CLASSEMENT ÉTENDU ===== */
+
+/* CRÈMERIE */
+if(
+  /chaussee aux moines|camembert|brie|comte|emmental|mozzarella|chevre|raclette|reblochon|munster|roquefort|feta|parmesan|gruyere|coulommiers|petit suisse|faisselle|dessert lacte|creme dessert|mousse choco|flan/.test(n)
+){
+  return 'Crèmerie';
+}
+
+/* CHARCUTERIE */
+if(
+  /cervela|cervelas|sauc\.? sec|saucisse seche|coppa|prosciutto|jambonneau|rillettes|pate de campagne|terrine|mousse de foie|andouille|chorizo|salami|rosette|bacon|lardons/.test(n)
+){
+  return 'Charcuterie';
+}
+
+/* BOUCHERIE */
+if(
+  /chair a saucisse|chair saucisse|boulette boeuf|boulette viande|merguez|chipolata|cote porc|cote de porc|filet poulet|filet plet|escalope|steak hache|viande hachee|aiguillette|cordon bleu volaille/.test(n)
+){
+  return 'Boucherie';
+}
+
+/* TRAITEUR */
+if(
+  /boulette vegetale|choucroute|couscous|taboule|gratin|hachis|parmentier|croque|crepe salee|galette|gnocchi|ravioli|tortellini|nem|nems|samossa|samoussa|assortiment asiatique|salade composee|ricebox|box|pasta box/.test(n)
+){
+  return 'Traiteur';
+}
+
+/* POISSONNERIE */
+if(
+  /accras de morue|tarama|saumon fume|truite fumee|hareng|maquereau|sardine|anchois|miettes crabe|chair crabe|crabe|surimi|batonnet poisson/.test(n)
+){
+  return 'Poissonnerie';
+}
+
+/* FRAIS / DESSERTS FRUITS */
+if(
+  /compote|pom\/abr|pomme abricot|pomme fraise|pomme peche|pomme poire|cerise morceaux|abricot morceaux|peche morceaux|fruit morceaux|dessert fruit/.test(n)
+){
+  return 'Frais';
+} 
   return 'Autres';
 }
 /* ===== CATALOGUE TRIÉ PAR RAYON ===== */
