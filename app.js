@@ -1019,3 +1019,108 @@ document.addEventListener('click', e => {
     renderRetroCasse();
   }, 0);
 });
+/* ===== CLASSEMENT AUTO CATALOGUE V2 ===== */
+
+function autoCatalogueRayon(name=''){
+  const n = String(name || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  /* TRAITEUR / SNACK */
+  if(
+    /sandwich|sdw|club|wrap|burger|baguette|pizza|quiche|lasagne|paella|couscous|cous royal|taboule|choucroute|gratin|hachis|parmentier|croque|gnocchi|ravioli|tortellini|nem|samoussa|samossa|ricebox|pasta box|boulette vegetale|blini|houmous/.test(n)
+  ){
+    return 'Traiteur';
+  }
+
+  /* CHARCUTERIE */
+  if(
+    /jambon|jbon|\bjb\b|jb cru|charcut|saucisson|sauc\.?\s*sec|saucisse seche|cervela|cervelas|andouillette|andouille|boudin|lard|lardon|bacon|chorizo|salami|mortadelle|rosette|coppa|rillettes|terrine|pate de campagne|jambonneau|coch\./.test(n)
+  ){
+    return 'Charcuterie';
+  }
+
+  /* POISSONNERIE */
+  if(
+    /saumon|thon|truite|cabillaud|colin|crevette|\bcrev\b|crev cui|morue|poisson|surimi|tarama|hareng|maquereau|sardine|anchois|crabe/.test(n)
+  ){
+    return 'Poissonnerie';
+  }
+
+  /* BOUCHERIE / VOLAILLE */
+  if(
+    /boeuf|bœuf|steak|veau|agneau|porc|poulet|\bplet\b|dinde|\bdde\b|volaille|escalope|aiguillette|chair a saucisse|chair saucisse|merguez|chipolata|cote porc|filet poulet|filet plet|viande hachee|steak hache/.test(n)
+  ){
+    return 'Boucherie';
+  }
+
+  /* CREMERIE / YAOURTS / FROMAGES / DESSERTS */
+  if(
+    /yaourt|\byrt\b|\byog\b|\byag\b|\byab\b|yogourt|skyr|danette|danonino|danone|veloute|activia|actifidus|fromage|fr\.?\s*blanc|from blanc|faisselle|petit suisse|boursin|apericube|aperivrais|camembert|brie|comte|emmental|mozza|mozzarella|chevre|raclette|reblochon|munster|roquefort|feta|parmesan|gruyere|coulommiers|maasdam|cheddar|gouda|burrata|edam|grana padano|ricotta|chaussee aux moines|fondu|fondant|tartin|beurrier|beurre|creme fraiche|cr\.?\s*fraiche|creme brulee|liegeois|douc\.?\s*satine|ile flottante|dessert lacte|mousse choco|flan|soja nature|delisse|deli'max/.test(n)
+  ){
+    return 'Crèmerie';
+  }
+
+  /* FRUITS / COMPOTES */
+  if(
+    /compote|pom\/abr|pom\/poi|pom\/pruneau|pomme abricot|pomme poire|pomme fraise|pomme peche|pomme pruneau|abricot morceaux|peche morceaux|cerise morceaux|fruit morceaux|dessert fruit/.test(n)
+  ){
+    return 'Frais';
+  }
+
+  return 'Autres';
+}
+
+/* ===== CLASSEMENT AUTO CATALOGUE V3 ===== */
+
+function autoCatalogueRayon(name=''){
+  const n = String(name || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  /* CRÈMERIE */
+  if(
+    /^croises\b|celia|chaussee aux moin|danette|danonino|danone|veloute|activia|actifidus|delisse|deli'max|yaourt|\byrt\b|\byog\b|\byag\b|\byab\b|skyr|fromage|fr\.?\s*blanc|from blanc|faisselle|petit suisse|boursin|apericube|aperivrais|camembert|brie|comte|emmental|mozza|mozzarella|chevre|raclette|reblochon|munster|roquefort|feta|parmesan|gruyere|coulommiers|maasdam|cheddar|gouda|burrata|edam|grana padano|ricotta|fondu|buche|tartin|beurrier|beurre|creme fraiche|cr\.?\s*fraiche|creme brulee|liegeois|douc\.?\s*satine|ile flottante|mousse choco|flan|soja nature|cd caramel|cd van|cd tri parf|cao van/.test(n)
+  ){
+    return 'Crèmerie';
+  }
+
+  /* CHARCUTERIE */
+  if(
+    /jambon|jbon|\bjb\b|jb cru|charcut|saucisson|sauc\.?\s*sec|saucisse seche|cervela|cervelas|andouillette|andouille|boudin|lard|lardon|bacon|chorizo|salami|mortadelle|rosette|coppa|rillettes|terrine|jambonneau|coch\./.test(n)
+  ){
+    return 'Charcuterie';
+  }
+
+  /* POISSONNERIE */
+  if(
+    /saumon|thon|truite|cabillaud|colin|crevette|\bcrev\b|crev cui|crev cuites|morue|poisson|surimi|tarama|hareng|maquereau|sardine|anchois|crabe/.test(n)
+  ){
+    return 'Poissonnerie';
+  }
+
+  /* BOUCHERIE / VOLAILLE */
+  if(
+    /boeuf|bœuf|steak|veau|agneau|porc|poulet|\bplet\b|dinde|\bdde\b|volaille|escalope|aiguillette|chair a saucisse|chair saucisse|merguez|chipolata|cote porc|filet poulet|filet plet|viande hachee|steak hache/.test(n)
+  ){
+    return 'Boucherie';
+  }
+
+  /* TRAITEUR / SNACK */
+  if(
+    /sandwich|sdw|club|wrap|burger|baguette|pizza|quiche|lasagne|paella|couscous|cous royal|taboule|choucroute|gratin|hachis|parmentier|croque|gnocchi|ravioli|tortellini|nem|samoussa|samossa|ricebox|pasta box|boulette vegetale|blini|houmous|salade composee|assortiment asiatique/.test(n)
+  ){
+    return 'Traiteur';
+  }
+
+  /* FRAIS / COMPOTES / FRUITS */
+  if(
+    /compote|d\.verger|pom\/abr|pom\/poi|pom\/pruneau|pomme abricot|pomme poire|pomme fraise|pomme peche|pomme pruneau|abricot morceaux|peche morceaux|cerise morceaux|fruit morceaux|c\/a,\s*pom|pom\/poire/.test(n)
+  ){
+    return 'Frais';
+  }
+
+  return 'Autres';
+}
