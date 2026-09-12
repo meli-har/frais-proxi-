@@ -610,3 +610,60 @@ display:none !important;
   color:#082f54;
   background:transparent;
 }
+/* ===== GESTION DES DATES ===== */
+
+.dateManagement{
+  margin:20px 16px;
+}
+
+.dateManagement h2{
+  margin:0 0 12px;
+  color:#082f54;
+  font-size:22px;
+  font-weight:800;
+}
+
+.dateManagementGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+.dateManagementGrid button{
+  min-height:115px;
+  padding:16px 12px;
+  border:0;
+  border-radius:20px;
+  background:#fff;
+  box-shadow:0 6px 20px rgba(0,0,0,.08);
+  display:flex;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  text-align:left;
+}
+
+.dateManagementGrid button:first-child{
+  background:#eaf5ff;
+}
+
+.dateManagementGrid button:last-child{
+  background:#fff0eb;
+}
+
+.dateManagementGrid span{
+  font-size:30px;
+  margin-bottom:8px;
+}
+
+.dateManagementGrid b{
+  color:#082f54;
+  font-size:17px;
+  font-weight:800;
+}
+
+.dateManagementGrid small{
+  margin-top:4px;
+  color:#64748b;
+  font-size:13px;
+}
