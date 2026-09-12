@@ -15,19 +15,23 @@
   <b>Planning DLC</b>
   <small>Jour par jour</small>
 </button></div>
-<div class="quickWide"><button data-daily="today"><span class="wideIcon orange">▣</span><div><b>Contrôle DLC</b><small>Vérifier les produits<br>du jour</small></div><em>›</em></button><button data-view="catalogueView" data-admin-only="true"><span class="wideIcon green">▥</span><div><b>Catalogue</b><small>Consulter et gérer<br>vos produits</small></div><em>›</em></button></div>
-<div class="sectionTitle homeSectionTitle activityTitle"><h2>◴ Dernières activités</h2><button data-view="productsView">Voir tout ›</button></div><div class="quickActions">
-  <button type="button" data-view="retroView">
-    <span>📋</span>
-    <b>Liste rétro</b>
-    <small>Produits à contrôler</small>
-  </button>
+<div class="dateManagement">
+  <h2>📅 Gestion des dates</h2>
 
-  <button type="button" data-view="casseView">
-    <span>🗑️</span>
-    <b>Liste casse</b>
-    <small>Produits à traiter</small>
-  </button>
+  <div class="dateManagementGrid">
+    <button type="button" data-view="retroView">
+      <span>📋</span>
+      <b>Liste rétro</b>
+      <small>Produits à contrôler</small>
+    </button>
+
+    <button type="button" data-view="casseView">
+      <span>🗑️</span>
+      <b>Liste casse</b>
+      <small>Produits à traiter</small>
+    </button>
+  </div>
+</div>
 </div><div id="homeRecent" class="homeRecent activityList"></div>
 <div class="homeFooterBrand"><div class="footerLeclerc"><img src="logo-leclerc-clean.png" class="footerLeclercLogo" alt="E.Leclerc"><span>Plus proche de vous<br>au quotidien</span></div><div class="homeSlogan"><b>Bien gérer aujourd'hui</b><span>pour moins gaspiller demain</span></div></div>
 </section><section id="addView" class="view"><div class="pageHead"><button data-view="homeView">‹</button><h1>Ajouter un produit</h1></div><div class="tabs"><button id="manualTab" class="selected">✎<span>Saisie manuelle</span></button><button id="scanTab">▥<span>Scanner code-barres</span></button></div><form id="productForm" class="card form"><label>Produit *<input id="name" required placeholder="Ex : Yaourt nature"></label><div><div class="multiDlcHead"><label>DLC et quantités *</label><button id="addDlcRow" type="button" class="miniGreenBtn">＋ Ajouter une date</button></div><div id="dlcRows" class="dlcRows"><div class="dlcEntry"><label>Date<input class="dlcDate" id="expiry" type="date" required></label><label>Quantité<div class="quantity compactQty"><button type="button" class="qtyMinus">−</button><input class="dlcQty" id="quantity" type="number" min="1" value="1"><button type="button" class="qtyPlus">+</button></div></label><button type="button" class="removeDlcRow hidden" aria-label="Supprimer cette date">×</button></div></div><small class="formHint">Vous pouvez saisir plusieurs DLC pour la même référence avant d’enregistrer.</small></div><label>Rayon *<select id="department"><option>Crèmerie</option><option>Charcuterie</option><option>Frais</option><option>Traiteur</option><option>Épicerie</option><option>Boucherie</option><option>Poissonnerie</option></select></label><label>Notes <small>(optionnel)</small><textarea id="note" rows="3" placeholder="Ex : marque, taille, etc."></textarea></label><label class="hidden">Code-barres<input id="barcode"></label><button class="greenBtn" type="submit">Enregistrer toutes les DLC</button></form></section>
