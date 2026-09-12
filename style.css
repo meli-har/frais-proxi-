@@ -675,3 +675,23 @@ display:none !important;
 #homeView .homeFooterBrand{
   display:none !important;
 }
+/* ===== CORRECTION LARGEUR / DEBORDEMENT ===== */
+
+html,
+body{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+#app,
+#homeView{
+  width:100%;
+  max-width:100%;
+  overflow-x:hidden;
+}
+
+#homeView img{
+  max-width:100%;
+  height:auto;
+}
