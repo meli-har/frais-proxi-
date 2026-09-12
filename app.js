@@ -773,7 +773,12 @@ function renderCatalogue(){
   const groups = {};
 
   rows.forEach(x => {
-    const rayon = (x.rayon || '').trim() || autoCatalogueRayon(x.nom || '');
+  const rayonExistant = (x.rayon || '').trim();
+
+const rayon =
+  (!rayonExistant || rayonExistant === 'Autres')
+    ? autoCatalogueRayon(x.nom || '')
+    : rayonExistant;  
 
     if(!groups[rayon]){
       groups[rayon] = [];
