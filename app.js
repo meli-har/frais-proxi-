@@ -1129,3 +1129,55 @@ function autoCatalogueRayon(name=''){
 
   return 'Autres';
 }
+/* ===== CLASSEMENT AUTO CATALOGUE V4 ===== */
+
+function autoCatalogueRayon(name=''){
+  const n = String(name || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  /* ===== CRÈMERIE / YAOURTS / FROMAGES ===== */
+  if(
+    /yop|yopl|yaourt|\byrt\b|\byog\b|\byag\b|\byab\b|danette|danonino|danone|activia|actifidus|veloute|skyr|petit suisse|fr\.?\s*blanc|from\.?\s*blc|fromage|from\.|faisselle|kiri|babybel|leerdammer|mimolette|mascarpone|mme loik|lou perac|petit billy|st moret|saint moret|st agur|saint agur|brillat|cancoillotte|chaource|crottin|fourme|morbier|rocamadour|st felicien|maroilles|bleu auvergne|tomme|tomme savoie|raclet|camembert|brie|comte|emment|mozza|mozzarella|chevre|reblochon|munster|roquefort|feta|parmesan|gruyere|coulommiers|maasdam|cheddar|gouda|burrata|edam|grana|ricotta|boursin|apericube|aperivrais|rondel|ortolan|croises|coeur de creme|creme fraiche|cf epaisse|beur\.?tdre|beurre|perle lait|riz lait|sem\.?lait|snack lait|sdm choco lait|creme caramel|liegeois|ile flottante|mousse.*choc|douc\.?\s*satine|lait\.,\s*ppc|pt basq|president.*emment/.test(n)
+  ){
+    return 'Crèmerie';
+  }
+
+  /* ===== POISSONNERIE ===== */
+  if(
+    /saum|saumon|thon|truite|cabillaud|colin|crevette|\bcrev\b|morue|poisson|pois\.?pane|surimi|coraya|tarama|hareng|maquereau|anchois|sardine|crabe|moule|gambas|r\.?\s*mers|p\.?ocean|marine prov/.test(n)
+  ){
+    return 'Poissonnerie';
+  }
+
+  /* ===== CHARCUTERIE ===== */
+  if(
+    /jambon|jbon|\bjb\b|charcut|saucisson|sauc\.?\s*sec|saucisse de morteau|saucisse seche|cervela|cervelas|andouillette|andouille|boudin|lard|lardon|bacon|chorizo|salami|mortadelle|mortadel|rosette|coppa|rillettes|rillette|terrine|jambonneau|coch\.|pate camp|pate tete|mousse canard|mousse de foie|roti bf cuit|allumettes plt|des epaule|blc plt/.test(n)
+  ){
+    return 'Charcuterie';
+  }
+
+  /* ===== BOUCHERIE / VOLAILLE ===== */
+  if(
+    /boeuf|bœuf|steak|ste hache|st\.?hache|hache.*vbf|chair a saucisse|chair saucisse|veau|agneau|porc frais|escalope|filet poulet|poulet frais|volaille|saucisse volaill|tartare.*herbe/.test(n)
+  ){
+    return 'Boucherie';
+  }
+
+  /* ===== TRAITEUR / PLATS PRÉPARÉS / SNACK ===== */
+  if(
+    /xtrem|xtrembox|radiatori|marie,|sodebo|sod\.|sal\.manhattan|sal\.montmartre|sal\.roma|salade antibes|sandwich|\bsdw\b|club|wrap|burger|pizza|quich|croque|croc'maxi|tarte aux poireaux|tarte poir|tortilla|tortillas|tort\.plt|tagliat|fettuccini|ravioli|ravio\.|gnocchi|lasagne|macaroni|spagh|nouilles chinoises|riz cantonais|couscous|cous royal|taboule|choucroute|paella|gratin|hachis|parment|ricebox|pasta box|nugget|vegetal.*gourmand|knacki vegetal|tielle|esc\.milan|boulet|pate feuil|pate sablee|feuilles brick/.test(n)
+  ){
+    return 'Traiteur';
+  }
+
+  /* ===== FRAIS / COMPOTES / FRUITS ===== */
+  if(
+    /compote|d\.verger|pom\/abr|pom\/poi|pom\/pruneau|pomme abricot|pomme poire|pomme fraise|pomme peche|pomme pruneau|abricot morceaux|peche morceaux|cerise morceaux|fruit morceaux|mini max sav fruits|panier.*abricot|panier.*nect/.test(n)
+  ){
+    return 'Frais';
+  }
+
+  return 'Autres';
+}
