@@ -815,3 +815,129 @@ if(saveRayonBtn){
     }, 1500);
   });
 }
+/* ===== LISTES RETRO / CASSE ===== */
+
+function regleCasseProduit(p){
+  const catalogueRow = catalogue.find(
+    x => String(x.code_barres || '') === String(p.barcode || '')
+  );
+
+  const rayon = String(
+    catalogueRow?.rayon || p.department || ''
+  ).toLowerCase()
+   .normalize('NFD')
+   .replace(/[\u0300-\u036f]/g, '');
+
+  const nom = String(p.name || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  /* CREMERIE / YAOURTS : casse J-6, rétro J-7 */
+  if(
+    rayon.includes('cremerie') ||
+    /yaourt|\byrt\b|yogourt|yogurt|skyr|fromage blanc/.test(nom)
+  ){
+    return 6;
+  }
+
+  /* PAIN DE MIE / BRIOCHE / CHARCUTERIE : casse J-5, rétro J-6 */
+  if(
+    rayon.includes('charcuterie') ||
+    /pain de mie|pdm|brioche/.test(nom)
+  ){
+    return 5;
+  }
+
+  /* SNACK / SALADES : casse J-2, rétro J-3 */
+  if(
+    /sandwich|sdw|club|wrap|burger|baguette|snack|salade|slde/.test(nom)
+  ){
+    return 2;
+  }
+
+  /* BOUCHERIE / VOLAILLE / SAURISSERIE : casse J-2, rétro J-3 */
+  if(
+    rayon.includes('boucherie') ||
+    rayon.includes('volaille') ||
+    rayon.includes('saurisserie') ||
+    /poulet|plet|dinde|dde|boeuf|bœuf|veau|agneau|steak|escalope|volaille|saurisserie/.test(nom)
+  ){
+    return 2;
+  }
+
+  return null;
+}
+
+function joursAvantDlc(dateIso){
+  if(!dateIso) return null;
+
+  const aujourdHui = new Date();
+  aujourdHui.setHours(0,0,0,0);
+
+  const dlc = new Date(dateIso + 'T00:00:00');
+  dlc.setHours(0,0,0,0);
+
+  return Math.round((dlc - aujourdHui) / 86400000);
+}
+
+function renderRetroCasse(){
+  const retroList = $('retroList');
+  const casseList = $('casseList');
+
+  if(!retroList || !casseList) return;
+
+  const retro = [];
+  const casse = [];
+
+  products
+    .filter(p => !p.done && p.expiry)
+    .forEach(p => {
+      const seuilCasse = regleCasseProduit(p);
+      if(seuilCasse === null) return;
+
+      const jours = joursAvantDlc(p.expiry);
+      if(jours === null) return;
+
+      if(jours === seuilCasse + 1){
+        retro.push({...p, jours, seuilCasse});
+      }else if(jours <= seuilCasse){
+        casse.push({...p, jours, seuilCasse});
+      }
+    });
+
+  retro.sort((a,b) => String(a.expiry).localeCompare(String(b.expiry)));
+  casse.sort((a,b) => String(a.expiry).localeCompare(String(b.expiry)));
+
+  retroList.innerHTML = retro.length
+    ? retro.map(p => `
+        <div class="card">
+          <b>${esc(p.name || 'Produit')}</b>
+          <p>DLC : ${fmt(p.expiry)} • Quantité : ${p.quantity || 1}</p>
+          <small>Rétro J-${p.jours} → casse à J-${p.seuilCasse}</small>
+        </div>
+      `).join('')
+    : '<div class="card">Aucun produit en rétro aujourd’hui.</div>';
+
+  casseList.innerHTML = casse.length
+    ? casse.map(p => `
+        <div class="card">
+          <b>${esc(p.name || 'Produit')}</b>
+          <p>DLC : ${fmt(p.expiry)} • Quantité : ${p.quantity || 1}</p>
+          <small>${p.jours < 0 ? 'DLC dépassée' : 'Casse J-' + p.jours}</small>
+        </div>
+      `).join('')
+    : '<div class="card">Aucun produit en casse aujourd’hui.</div>';
+}
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest(
+    '[data-view="retroView"], [data-view="casseView"]'
+  );
+
+  if(!btn) return;
+
+  setTimeout(() => {
+    renderRetroCasse();
+  }, 0);
+});
