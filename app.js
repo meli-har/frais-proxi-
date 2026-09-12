@@ -669,7 +669,42 @@ function autoCatalogueRayon(name=''){
   if(/fruit|legume|tomate|carotte|pomme|cerise|fraise|melon|courgette|poivron|compote/.test(n)){
     return 'Frais';
   }
+/* ===== RÈGLES SUPPLÉMENTAIRES ===== */
 
+/* CRÈMERIE */
+if(
+  /activia|boursin|apericube|aperivrais|fromage|fromage blanc|yaourt|yrt|yog|skyr|beurre|creme|lait/.test(n)
+){
+  return 'Crèmerie';
+}
+
+/* CHARCUTERIE */
+if(
+  /lard|andouillette|boudin|jambon|jbon|jb cru|saucisson|salami|chorizo|mortadelle|rosette|bacon|lardon/.test(n)
+){
+  return 'Charcuterie';
+}
+
+/* TRAITEUR */
+if(
+  /blini|houmous|tarama|accras|baguette|sandwich|sdw|club|wrap|burger|pizza|quiche|lasagne|paella|pasta|pate|sushi/.test(n)
+){
+  return 'Traiteur';
+}
+
+/* POISSONNERIE */
+if(
+  /morue|surimi|saumon|thon|truite|cabillaud|colin|crevette|poisson/.test(n)
+){
+  return 'Poissonnerie';
+}
+
+/* BOUCHERIE */
+if(
+  /poulet|plet|dinde|dde|boeuf|bœuf|steak|veau|agneau|porc|escalope|volaille/.test(n)
+){
+  return 'Boucherie';
+}
   return 'Autres';
 }
 /* ===== CATALOGUE TRIÉ PAR RAYON ===== */
