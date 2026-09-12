@@ -667,3 +667,11 @@ display:none !important;
   color:#64748b;
   font-size:13px;
 }
+/* Masquer le gros logo E.Leclerc en bas de l'accueil */
+#homeView .footerLeclercLogo{
+  display:none !important;
+}
+
+#homeView .homeFooterBrand{
+  display:none !important;
+}
