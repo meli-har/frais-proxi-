@@ -1561,3 +1561,40 @@ renderCatalogue = function() {
   catalogueDernierAffichage = signature;
   renderCatalogueOriginal();
 };
+/* ===== PHOTOS SANS SAUT V3 ===== */
+
+enrichMissingPhotos = async function(limit = 60) {
+  if (!navigator.onLine || !isAdmin()) return;
+
+  const missing = catalogue
+    .filter(x => !x.photo_url && x.code_barres)
+    .slice(0, limit);
+
+  let changement = false;
+
+  for (const row of missing) {
+    const off = await lookupOpenFoodFacts(row.code_barres);
+
+    if (off?.photo_url) {
+      row.photo_url = off.photo_url;
+      changement = true;
+
+      try {
+        await db
+          .from('catalogue_produits')
+          .update({
+            photo_url: off.photo_url,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', row.id)
+          .eq('magasin_id', magasinId);
+      } catch (e) {
+        console.warn('Photo catalogue:', e);
+      }
+    }
+  }
+
+  if (changement) {
+    saveCatalogueLocal();
+  }
+};
