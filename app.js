@@ -1502,3 +1502,32 @@ function autoCatalogueRayon(name=''){
     ajouterCasesRayons();
   }
 })();
+/* ===== ANTI-SAUT IMAGES V1 ===== */
+const loadProductsOriginal = loadProducts;
+
+loadProducts = async function(silent = false) {
+  if (!db || !magasinId) return;
+
+  const { data, error } = await db
+    .from('produits')
+    .select('*')
+    .eq('magasin_id', magasinId)
+    .order('dlc', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    if (!silent) toast('Mode hors ligne : données du téléphone');
+    console.error(error);
+    return;
+  }
+
+  const nouveauxProduits = (data || []).map(mapRow);
+
+  if (JSON.stringify(nouveauxProduits) === JSON.stringify(products)) {
+    return;
+  }
+
+  products = nouveauxProduits;
+  saveLocal();
+  render();
+};
