@@ -1531,3 +1531,33 @@ loadProducts = async function(silent = false) {
   saveLocal();
   render();
 };
+/* ===== ANTI-SAUT CATALOGUE V2 ===== */
+
+let catalogueDernierAffichage = '';
+
+const renderCatalogueOriginal = renderCatalogue;
+
+renderCatalogue = function() {
+  if (!$('catalogueList')) return;
+
+  const q = ($('catalogueSearch')?.value || '')
+    .trim()
+    .toLowerCase();
+
+  const signature = JSON.stringify(
+    catalogue.map(x => [
+      x.id,
+      x.nom,
+      x.code_barres,
+      x.rayon,
+      x.photo_url
+    ])
+  ) + '|' + q;
+
+  if (signature === catalogueDernierAffichage) {
+    return;
+  }
+
+  catalogueDernierAffichage = signature;
+  renderCatalogueOriginal();
+};
