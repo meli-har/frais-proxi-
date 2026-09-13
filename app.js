@@ -1598,3 +1598,29 @@ enrichMissingPhotos = async function(limit = 60) {
     saveCatalogueLocal();
   }
 };
+/* ===== PHOTO MANUELLE PRODUIT V1 ===== */
+
+let produitPhotoEnCours = null;
+
+document.addEventListener('click', e => {
+  const bouton = e.target.closest('[data-photo-produit]');
+  if (!bouton) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  produitPhotoEnCours = bouton.dataset.photoProduit;
+
+  const input = document.getElementById('productPhotoInput');
+  if (input) {
+    input.value = '';
+    input.click();
+  }
+});
+
+document.getElementById('productPhotoInput')?.addEventListener('change', async e => {
+  const fichier = e.target.files?.[0];
+  if (!fichier || !produitPhotoEnCours) return;
+
+  toast('Photo sélectionnée');
+});
