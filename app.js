@@ -1624,3 +1624,27 @@ document.getElementById('productPhotoInput')?.addEventListener('change', async e
 
   toast('Photo sélectionnée');
 });
+/* ===== BOUTON PHOTO SUR PRODUITS V1 ===== */
+
+const renderCatalogueAvecPhoto = renderCatalogue;
+
+renderCatalogue = function() {
+  renderCatalogueAvecPhoto();
+
+  document.querySelectorAll('#catalogueList [data-cat-id]').forEach(carte => {
+    if (carte.querySelector('[data-photo-produit]')) return;
+
+    const id = carte.dataset.catId;
+    const produit = catalogue.find(x => String(x.id) === String(id));
+    if (!produit) return;
+
+    const bouton = document.createElement('button');
+    bouton.type = 'button';
+    bouton.className = 'boutonPhotoProduit';
+    bouton.dataset.photoProduit = produit.code_barres;
+    bouton.innerHTML = produit.photo_url ? '📷' : '📷＋';
+    bouton.title = produit.photo_url ? 'Modifier la photo' : 'Ajouter une photo';
+
+    carte.appendChild(bouton);
+  });
+};
