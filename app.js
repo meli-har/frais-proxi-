@@ -1373,4 +1373,132 @@ function autoCatalogueRayon(name=''){
 
   return 'Autres';
 }
+/* ===== CASES RAYONS CATALOGUE V1 ===== */
 
+(() => {
+  const rayonsCatalogue = [
+    ['Tous', '📦'],
+    ['Crèmerie', '🥛'],
+    ['Charcuterie', '🥓'],
+    ['Boucherie', '🥩'],
+    ['Poissonnerie', '🐟'],
+    ['Traiteur', '🍽️'],
+    ['Frais', '🥬'],
+    ['Pain de mie', '🍞'],
+    ['Œufs', '🥚'],
+    ['Brioche', '🥐'],
+    ['Saucisson', '🌭'],
+    ['Bébé', '🍼'],
+    ['Autres', '📋']
+  ];
+
+  let rayonCatalogueActif = 'Tous';
+
+  function ajouterCasesRayons() {
+    const vue = document.getElementById('catalogueView');
+    if (!vue || document.getElementById('catalogueRayonCases')) return;
+
+    const recherche =
+      vue.querySelector('input[type="search"]') ||
+      vue.querySelector('input[placeholder*="Recher"]');
+
+    const zone = document.createElement('div');
+    zone.id = 'catalogueRayonCases';
+    zone.className = 'catalogueRayonCases';
+
+    zone.innerHTML = rayonsCatalogue.map(([nom, icone]) => `
+      <button
+        type="button"
+        class="catalogueRayonCase ${nom === 'Tous' ? 'active' : ''}"
+        data-catalogue-rayon="${nom}">
+        <span>${icone}</span>
+        <strong>${nom}</strong>
+      </button>
+    `).join('');
+
+    if (recherche) {
+      recherche.parentElement.insertAdjacentElement('afterend', zone);
+    } else {
+      vue.insertBefore(zone, vue.firstChild);
+    }
+  }
+
+  document.addEventListener('click', e => {
+    const bouton = e.target.closest('[data-catalogue-rayon]');
+    if (!bouton) return;
+
+    rayonCatalogueActif = bouton.dataset.catalogueRayon;
+
+    document.querySelectorAll('.catalogueRayonCase').forEach(b => {
+      b.classList.toggle(
+        'active',
+        b.dataset.catalogueRayon === rayonCatalogueActif
+      );
+    });
+
+    document.querySelectorAll('#catalogueView [data-cat-id]').forEach(carte => {
+      const id = String(carte.dataset.catId || '');
+      const produit = catalogue.find(p => String(p.id) === id);
+
+      if (!produit) return;
+
+      const rayonExistant = (produit.rayon || '').trim();
+
+      const rayon =
+        (!rayonExistant || rayonExistant === 'Autres')
+          ? autoCatalogueRayon(produit.nom || '')
+          : rayonExistant;
+
+      carte.style.display =
+        rayonCatalogueActif === 'Tous' || rayon === rayonCatalogueActif
+          ? ''
+          : 'none';
+    });
+  });
+
+  const style = document.createElement('style');
+
+  style.textContent = `
+    .catalogueRayonCases{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:10px;
+      margin:14px 0 18px;
+    }
+
+    .catalogueRayonCase{
+      min-height:74px;
+      border:1px solid #dce4ec;
+      border-radius:16px;
+      background:#fff;
+      color:#12345b;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:12px;
+      text-align:left;
+      box-shadow:0 3px 10px rgba(0,0,0,.06);
+    }
+
+    .catalogueRayonCase span{
+      font-size:27px;
+    }
+
+    .catalogueRayonCase strong{
+      font-size:15px;
+    }
+
+    .catalogueRayonCase.active{
+      border:2px solid #12345b;
+      background:#eef5fb;
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ajouterCasesRayons);
+  } else {
+    ajouterCasesRayons();
+  }
+})();
