@@ -712,3 +712,27 @@ body{
 .footerLeclerc img{
   display:none !important;
 }
+/* ===== BOUTON PHOTO PRODUIT ===== */
+
+#catalogueList [data-cat-id] {
+  position: relative;
+  padding-right: 58px;
+}
+
+.boutonPhotoProduit {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border: 1px solid #cfe3f5;
+  border-radius: 50%;
+  background: #eef7ff;
+  font-size: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 3;
+}
