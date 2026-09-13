@@ -1181,3 +1181,108 @@ function autoCatalogueRayon(name=''){
 
   return 'Autres';
 }
+/* ===== BOUTON RETOUR GLOBAL ===== */
+
+(() => {
+  const historiqueVues = [];
+
+  function vueActuelle() {
+    const vues = [...document.querySelectorAll('[id$="View"]')];
+
+    return vues.find(v => {
+      const style = getComputedStyle(v);
+      return !v.hidden &&
+             style.display !== 'none' &&
+             !v.classList.contains('hidden');
+    });
+  }
+
+  /* Mémorise la page avant d'en ouvrir une autre */
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('[data-view]');
+    if (!btn || btn.classList.contains('globalBackBtn')) return;
+
+    const actuelle = vueActuelle();
+    const prochaine = btn.dataset.view;
+
+    if (
+      actuelle &&
+      actuelle.id !== prochaine &&
+      actuelle.id !== 'loginView'
+    ) {
+      historiqueVues.push({
+        id: actuelle.id,
+        scroll: window.scrollY
+      });
+    }
+  }, true);
+
+  /* Ajoute automatiquement Retour aux pages secondaires */
+  function ajouterBoutonsRetour() {
+    document.querySelectorAll('[id$="View"]').forEach(view => {
+
+      if (
+        view.id === 'homeView' ||
+        view.id === 'loginView' ||
+        view.id === 'productDetailView'
+      ) return;
+
+      if (view.querySelector('.globalBackBtn')) return;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'globalBackBtn';
+      btn.innerHTML = '← Retour';
+
+      btn.addEventListener('click', () => {
+        const precedent = historiqueVues.pop();
+
+        if (precedent && document.getElementById(precedent.id)) {
+          show(precedent.id);
+
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              window.scrollTo(0, precedent.scroll || 0);
+            });
+          });
+
+        } else {
+          show('homeView');
+          window.scrollTo(0, 0);
+        }
+      });
+
+      view.insertBefore(btn, view.firstChild);
+    });
+  }
+
+  /* Style du bouton */
+  const style = document.createElement('style');
+  style.textContent = `
+    .globalBackBtn{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      border:0;
+      background:transparent;
+      color:#12345b;
+      font-size:16px;
+      font-weight:700;
+      padding:12px 4px;
+      margin:0 0 8px 0;
+      cursor:pointer;
+    }
+
+    .globalBackBtn:active{
+      opacity:.6;
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ajouterBoutonsRetour);
+  } else {
+    ajouterBoutonsRetour();
+  }
+})();
