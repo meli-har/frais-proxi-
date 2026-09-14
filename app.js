@@ -1288,86 +1288,92 @@ function autoCatalogueRayon(name=''){
 })();
 /* ===== CLASSEMENT AUTO CATALOGUE V5 ===== */
 
-function autoCatalogueRayon(name=''){
+/* ===== CLASSEMENT AUTO CATALOGUE V6 ===== */
+
+function autoCatalogueRayon(name = '') {
   const n = String(name || '')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/œ/g, 'oe')
+    .replace(/[’']/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 
   /* ===== PAIN DE MIE ===== */
-  if(
-    /pain de mie|\bpdm\b|harrys.*mie|jacquet.*mie|mie complet|mie nature/.test(n)
-  ){
+  if (
+    /pain de mie|\bpdm\b|harrys.*mie|jacquet.*mie|mie complet|mie nature|mie cereal/.test(n)
+  ) {
     return 'Pain de mie';
   }
 
   /* ===== ŒUFS ===== */
-  if(
-  /oeuf|œuf/.test(n)
-){
-  return 'Œufs';
-}
+  if (
+    /\boeufs?\b/.test(n)
+  ) {
+    return 'Œufs';
+  }
 
   /* ===== BRIOCHE ===== */
-  if(
-    /brioche|gache|gâche|briochette|pain au lait/.test(n)
-  ){
+  if (
+    /brioche|briochette|gache|pain au lait|pain lait|pitch|doo wap|croissant|pain chocolat|pains chocolat|chinois|beignet|pancake|madeleine|moelleux|quatre quart|barre patissiere|crepe|gaufre/.test(n)
+  ) {
     return 'Brioche';
   }
 
   /* ===== SAUCISSON ===== */
-  if(
-    /saucisson|sauc\.?\s*sec|saucisse seche|rosette|fuet/.test(n)
-  ){
+  if (
+    /saucisson|sauc sec|saucisse seche|rosette|fuet|chorizo|baton berger|stick.*sec/.test(n)
+  ) {
     return 'Saucisson';
   }
 
   /* ===== BÉBÉ ===== */
-  if(
-    /bebe|bébé|baby|blédina|bledina|nestle bebe|nestlé bébé|petit pot|petits pots|dessert bebe|dessert bébé|yaourt bebe|yaourt bébé|compote bebe|compote bébé|gourde bebe|gourde bébé/.test(n)
-  ){
+  if (
+    /bebe|baby|bledina|blediner|bledichef|bledidej|bledi|gallia|natur nes|naturnes|babybio|hipp|petit pot|ptit gourmand|p brasse|lait croissance|calisma|galliagest|bavicao|babicao|babivanille|mon prem biscuit|1er biscuit|1er boudoir/.test(n)
+  ) {
     return 'Bébé';
   }
 
-  /* ===== CRÈMERIE / YAOURTS / FROMAGES ===== */
-  if(
-    /yop|yopl|yaourt|\byrt\b|\byog\b|\byag\b|\byab\b|danette|danonino|danone|activia|actifidus|veloute|skyr|petit suisse|fr\.?\s*blanc|from\.?\s*blc|fromage|from\.|faisselle|kiri|babybel|leerdammer|mimolette|mascarpone|mme loik|lou perac|petit billy|st moret|saint moret|st agur|saint agur|brillat|cancoillotte|chaource|crottin|fourme|morbier|rocamadour|st felicien|maroilles|bleu auvergne|tomme|tomme savoie|raclet|camembert|brie|comte|emment|mozza|mozzarella|chevre|reblochon|munster|roquefort|feta|parmesan|gruyere|coulommiers|maasdam|cheddar|gouda|burrata|edam|grana|ricotta|boursin|apericube|aperivrais|rondel|ortolan|croises|coeur de creme|creme fraiche|cf epaisse|beur\.?tdre|beurre|perle lait|riz lait|sem\.?lait|snack lait|sdm choco lait|creme caramel|liegeois|ile flottante|mousse.*choc|douc\.?\s*satine|lait\.,\s*ppc|pt basq|president.*emment/.test(n)
-  ){
-    return 'Crèmerie';
+  /* ===== BOUCHERIE / VOLAILLE ===== */
+  if (
+    /\bboeuf\b|brochette.*boeuf|steak|ste hache|hache.*vbf|chair.*saucisse|veau|agneau|porc frais|escalope|filet poulet|poulet frais|volaille|dinde|canard frais|tartare.*herbe/.test(n)
+  ) {
+    return 'Boucherie';
   }
 
   /* ===== POISSONNERIE ===== */
-  if(
-    /saum|saumon|thon|truite|cabillaud|colin|crevette|\bcrev\b|morue|poisson|pois\.?pane|surimi|coraya|tarama|hareng|maquereau|anchois|sardine|crabe|moule|gambas|r\.?\s*mers|p\.?ocean|marine prov/.test(n)
-  ){
+  if (
+    /saumon|\bsaum\b|thon|truite|cabillaud|colin|crevette|\bcrev\b|morue|poisson|surimi|coraya|tarama|hareng|maquereau|anchois|sardine|crabe|moule|gambas/.test(n)
+  ) {
     return 'Poissonnerie';
   }
 
   /* ===== CHARCUTERIE ===== */
-  if(
-    /jambon|jbon|\bjb\b|charcut|cervela|cervelas|andouillette|andouille|boudin|lard|lardon|bacon|chorizo|salami|mortadelle|mortadel|coppa|rillettes|rillette|terrine|jambonneau|coch\.|pate camp|pate tete|mousse canard|mousse de foie|roti bf cuit|allumettes plt|des epaule|blc plt/.test(n)
-  ){
+  if (
+    /jambon|jbon|\bjb\b|charcut|cervela|andouillette|andouille|boudin|lard|lardon|bacon|salami|mortadelle|coppa|rillettes|terrine|jambonneau|mousse canard|mousse foie|roti.*cuit|epaule/.test(n)
+  ) {
     return 'Charcuterie';
   }
 
-  /* ===== BOUCHERIE / VOLAILLE ===== */
-  if(
-    /boeuf|bœuf|steak|ste hache|st\.?hache|hache.*vbf|chair a saucisse|chair saucisse|veau|agneau|porc frais|escalope|filet poulet|poulet frais|volaille|saucisse volaill|tartare.*herbe/.test(n)
-  ){
-    return 'Boucherie';
-  }
-
   /* ===== TRAITEUR / SNACK ===== */
-  if(
-    /xtrem|xtrembox|radiatori|marie,|sodebo|sod\.|sal\.manhattan|sal\.montmartre|sal\.roma|salade antibes|sandwich|\bsdw\b|club|wrap|burger|pizza|quich|croque|croc'maxi|tarte aux poireaux|tarte poir|tortilla|tortillas|tort\.plt|tagliat|fettuccini|ravioli|ravio\.|gnocchi|lasagne|macaroni|spagh|nouilles chinoises|riz cantonais|couscous|cous royal|taboule|choucroute|paella|gratin|hachis|parment|ricebox|pasta box|nugget|vegetal.*gourmand|knacki vegetal|tielle|esc\.milan|boulet|pate feuil|pate sablee|feuilles brick/.test(n)
-  ){
+  if (
+    /sodebo|\bsod\b|sandwich|\bsdw\b|club|wrap|burger|pizza|quich|croque|tortilla|tagliat|fettuccini|ravioli|gnocchi|lasagne|macaroni|spaghetti|nouilles|riz cantonais|couscous|taboule|choucroute|paella|gratin|hachis|parment|ricebox|pasta box|nugget|tielle|boulette|salade antibes|sal manhattan|sal montmartre|sal roma|pate feuil|pate sablee|brick/.test(n)
+  ) {
     return 'Traiteur';
   }
 
+  /* ===== CRÈMERIE ===== */
+  if (
+    /yop|yoplait|yaourt|\byrt\b|\byog\b|danette|danonino|danone|activia|actimel|skyr|petit suisse|fromage|faisselle|kiri|babybel|leerdammer|mimolette|mascarpone|st moret|saint moret|st agur|fourme|morbier|raclette|camembert|brie|comte|emmental|mozza|mozzarella|chevre|reblochon|munster|roquefort|feta|parmesan|gruyere|cheddar|gouda|burrata|ricotta|boursin|creme fraiche|beurre|riz lait|liegeois|mousse.*choc/.test(n)
+  ) {
+    return 'Crèmerie';
+  }
+
   /* ===== FRAIS / COMPOTES / FRUITS ===== */
-  if(
-    /compote|d\.verger|pom\/abr|pom\/poi|pom\/pruneau|pomme abricot|pomme poire|pomme fraise|pomme peche|pomme pruneau|abricot morceaux|peche morceaux|cerise morceaux|fruit morceaux|mini max sav fruits|panier.*abricot|panier.*nect/.test(n)
-  ){
+  if (
+    /compote|pomme abricot|pomme poire|pomme fraise|pomme peche|pomme pruneau|abricot morceaux|peche morceaux|cerise morceaux|fruit morceaux|panier.*fruit/.test(n)
+  ) {
     return 'Frais';
   }
 
