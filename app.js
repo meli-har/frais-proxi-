@@ -1816,3 +1816,26 @@ document.addEventListener(
   },
   true
 );
+/* ===== NETTOYAGE AFFICHAGE CATALOGUE ===== */
+
+function nettoyerAffichageCatalogue() {
+  const vue = document.getElementById('catalogueView');
+  if (!vue) return;
+
+  // Cache le bouton Retour global en trop dans le catalogue
+  const boutonsRetour = vue.querySelectorAll('.globalBackBtn');
+  boutonsRetour.forEach(btn => {
+    btn.style.display = 'none';
+  });
+
+  // Retire les petits chevrons > isolés entre les produits
+  vue.querySelectorAll('.chev').forEach(el => {
+    el.style.display = 'none';
+  });
+}
+
+document.addEventListener('click', () => {
+  setTimeout(nettoyerAffichageCatalogue, 50);
+});
+
+setTimeout(nettoyerAffichageCatalogue, 300);
