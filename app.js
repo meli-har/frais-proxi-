@@ -1839,3 +1839,15 @@ document.addEventListener('click', () => {
 });
 
 setTimeout(nettoyerAffichageCatalogue, 300);
+/* ===== BLOQUER LE RERENDER DANS UNE PAGE RAYON ===== */
+
+const renderCatalogueAvantModeRayon = renderCatalogue;
+
+renderCatalogue = function() {
+  if (catalogueRayonMode) {
+    afficherProduitsRayon(catalogueRayonMode);
+    return;
+  }
+
+  renderCatalogueAvantModeRayon();
+};
