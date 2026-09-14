@@ -1648,3 +1648,171 @@ renderCatalogue = function() {
     carte.appendChild(bouton);
   });
 };
+/* ===== PAGE RAYON CATALOGUE V2 ===== */
+
+let catalogueRayonMode = null;
+
+function rayonReelProduit(produit) {
+  const rayonExistant = (produit.rayon || '').trim();
+
+  return (!rayonExistant || rayonExistant === 'Autres')
+    ? autoCatalogueRayon(produit.nom || '')
+    : rayonExistant;
+}
+
+function afficherProduitsRayon(nomRayon) {
+  catalogueRayonMode = nomRayon;
+
+  const zoneRayons = document.getElementById('catalogueRayonCases');
+  const liste = document.getElementById('catalogueList');
+  const recherche = document.getElementById('catalogueSearch');
+
+  if (!liste) return;
+
+  if (zoneRayons) zoneRayons.style.display = 'none';
+
+  let entete = document.getElementById('catalogueRayonHeader');
+
+  if (!entete) {
+    entete = document.createElement('div');
+    entete.id = 'catalogueRayonHeader';
+
+    liste.parentElement.insertBefore(entete, liste);
+  }
+
+  entete.style.display = 'block';
+
+  const q = (recherche?.value || '').trim().toLowerCase();
+
+  let produitsRayon = catalogue.filter(produit => {
+    const rayon = rayonReelProduit(produit);
+
+    const correspondRayon =
+      nomRayon === 'Tous' || rayon === nomRayon;
+
+    const correspondRecherche =
+      !q ||
+      (produit.nom || '').toLowerCase().includes(q) ||
+      String(produit.code_barres || '').includes(q);
+
+    return correspondRayon && correspondRecherche;
+  });
+
+  produitsRayon.sort((a, b) =>
+    String(a.nom || '').localeCompare(String(b.nom || ''), 'fr')
+  );
+
+  entete.innerHTML = `
+    <button type="button" id="retourRayonsCatalogue">
+      ← Retour aux rayons
+    </button>
+
+    <div class="catalogueRayonTitre">
+      <h2>${nomRayon}</h2>
+      <span>${produitsRayon.length} produit${produitsRayon.length > 1 ? 's' : ''}</span>
+    </div>
+  `;
+
+  liste.innerHTML = produitsRayon.length
+    ? produitsRayon.map(produit => `
+        <button
+          type="button"
+          class="catalogueItem"
+          data-cat-id="${produit.id}"
+        >
+          <span class="eanIcon cataloguePhotoBox">
+            ${
+              produit.photo_url
+                ? `<img
+                    src="${esc(produit.photo_url)}"
+                    alt="${esc(produit.nom)}"
+                    loading="lazy"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='grid'"
+                  >
+                  <span class="photoFallback" style="display:none">▥</span>`
+                : `<span class="photoFallback">▥</span>`
+            }
+          </span>
+
+          <span class="catInfo">
+            <b>${esc(produit.nom)}</b>
+            <small>
+              EAN ${esc(produit.code_barres || '')}
+              · ${esc(rayonReelProduit(produit))}
+            </small>
+          </span>
+
+          <button
+            type="button"
+            class="boutonPhotoProduit"
+            data-photo-produit="${esc(produit.code_barres || '')}"
+            title="${produit.photo_url ? 'Modifier la photo' : 'Ajouter une photo'}"
+          >
+            ${produit.photo_url ? '📷' : '📷＋'}
+          </button>
+
+          <span class="chev">›</span>
+        </button>
+      `).join('')
+    : `<p class="muted">Aucun produit dans ce rayon.</p>`;
+}
+
+document.addEventListener(
+  'click',
+  e => {
+    const rayonBtn = e.target.closest('[data-catalogue-rayon]');
+
+    if (rayonBtn) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      afficherProduitsRayon(
+        rayonBtn.dataset.catalogueRayon
+      );
+
+      window.scrollTo({
+        top: document.getElementById('catalogueView')?.offsetTop || 0,
+        behavior: 'smooth'
+      });
+
+      return;
+    }
+
+    const retour = e.target.closest('#retourRayonsCatalogue');
+
+    if (retour) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+
+      catalogueRayonMode = null;
+
+      const zoneRayons = document.getElementById('catalogueRayonCases');
+      const entete = document.getElementById('catalogueRayonHeader');
+
+      if (zoneRayons) zoneRayons.style.display = 'grid';
+      if (entete) entete.style.display = 'none';
+
+      renderCatalogue();
+
+      window.scrollTo({
+        top: document.getElementById('catalogueView')?.offsetTop || 0,
+        behavior: 'smooth'
+      });
+    }
+  },
+  true
+);
+
+document.addEventListener(
+  'input',
+  e => {
+    if (
+      catalogueRayonMode &&
+      e.target?.id === 'catalogueSearch'
+    ) {
+      e.stopImmediatePropagation();
+      afficherProduitsRayon(catalogueRayonMode);
+    }
+  },
+  true
+);
