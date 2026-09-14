@@ -1288,7 +1288,7 @@ function autoCatalogueRayon(name=''){
 })();
 /* ===== CLASSEMENT AUTO CATALOGUE V5 ===== */
 
-/* ===== CLASSEMENT AUTO CATALOGUE V6 ===== */
+/* ===== CLASSEMENT AUTO CATALOGUE V7 ===== */
 
 function autoCatalogueRayon(name = '') {
   const n = String(name || '')
@@ -1307,13 +1307,6 @@ function autoCatalogueRayon(name = '') {
     return 'Pain de mie';
   }
 
-  /* ===== ŒUFS ===== */
-  if (
-    /\boeufs?\b/.test(n)
-  ) {
-    return 'Œufs';
-  }
-
   /* ===== BRIOCHE ===== */
   if (
     /brioche|briochette|gache|pain au lait|pain lait|pitch|doo wap|croissant|pain chocolat|pains chocolat|chinois|beignet|pancake|madeleine|moelleux|quatre quart|barre patissiere|crepe|gaufre/.test(n)
@@ -1330,16 +1323,16 @@ function autoCatalogueRayon(name = '') {
 
   /* ===== BÉBÉ ===== */
   if (
-    /bebe|baby|bledina|blediner|bledichef|bledidej|bledi|gallia|natur nes|naturnes|babybio|hipp|petit pot|ptit gourmand|p brasse|lait croissance|calisma|galliagest|bavicao|babicao|babivanille|mon prem biscuit|1er biscuit|1er boudoir/.test(n)
+    /bebe|baby|bledina|blediner|bledichef|bledidej|bledi|gallia|calisma|galliagest|naturnes|babybio|hipp|petit pot|ptit gourmand|p brasse|lait croissance|babicao|babivanille|mon prem biscuit|1er biscuit|1er boudoir/.test(n)
   ) {
     return 'Bébé';
   }
 
-  /* ===== BOUCHERIE / VOLAILLE ===== */
+  /* ===== TRAITEUR / SNACK ===== */
   if (
-    /\bboeuf\b|brochette.*boeuf|steak|ste hache|hache.*vbf|chair.*saucisse|veau|agneau|porc frais|escalope|filet poulet|poulet frais|volaille|dinde|canard frais|tartare.*herbe/.test(n)
+    /sodebo|\bsod\b|sandwich|\bsdw\b|club|wrap|burger|pizza|quich|croque|tortilla|tagliat|fettuccini|ravioli|gnocchi|lasagne|macaroni|spaghetti|nouilles|riz cantonais|couscous|taboule|choucroute|paella|gratin|hachis|parment|ricebox|pasta box|nugget|tielle|boulette|salade|sal\.|pate feuil|pate sablee|brick/.test(n)
   ) {
-    return 'Boucherie';
+    return 'Traiteur';
   }
 
   /* ===== POISSONNERIE ===== */
@@ -1349,18 +1342,18 @@ function autoCatalogueRayon(name = '') {
     return 'Poissonnerie';
   }
 
+  /* ===== BOUCHERIE / VOLAILLE ===== */
+  if (
+    /\bboeuf\b|brochette.*boeuf|steak|ste hache|hache.*vbf|chair.*saucisse|veau|agneau|porc frais|escalope|filet poulet|poulet frais|volaille|dinde|canard frais|tartare.*herbe/.test(n)
+  ) {
+    return 'Boucherie';
+  }
+
   /* ===== CHARCUTERIE ===== */
   if (
     /jambon|jbon|\bjb\b|charcut|cervela|andouillette|andouille|boudin|lard|lardon|bacon|salami|mortadelle|coppa|rillettes|terrine|jambonneau|mousse canard|mousse foie|roti.*cuit|epaule/.test(n)
   ) {
     return 'Charcuterie';
-  }
-
-  /* ===== TRAITEUR / SNACK ===== */
-  if (
-    /sodebo|\bsod\b|sandwich|\bsdw\b|club|wrap|burger|pizza|quich|croque|tortilla|tagliat|fettuccini|ravioli|gnocchi|lasagne|macaroni|spaghetti|nouilles|riz cantonais|couscous|taboule|choucroute|paella|gratin|hachis|parment|ricebox|pasta box|nugget|tielle|boulette|salade antibes|sal manhattan|sal montmartre|sal roma|pate feuil|pate sablee|brick/.test(n)
-  ) {
-    return 'Traiteur';
   }
 
   /* ===== CRÈMERIE ===== */
@@ -1370,11 +1363,18 @@ function autoCatalogueRayon(name = '') {
     return 'Crèmerie';
   }
 
-  /* ===== FRAIS / COMPOTES / FRUITS ===== */
+  /* ===== FRAIS / COMPOTES ===== */
   if (
     /compote|pomme abricot|pomme poire|pomme fraise|pomme peche|pomme pruneau|abricot morceaux|peche morceaux|cerise morceaux|fruit morceaux|panier.*fruit/.test(n)
   ) {
     return 'Frais';
+  }
+
+  /* ===== ŒUFS ===== */
+  if (
+    /\boeufs?\b/.test(n)
+  ) {
+    return 'Œufs';
   }
 
   return 'Autres';
