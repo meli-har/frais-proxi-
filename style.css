@@ -736,3 +736,7 @@ body{
   padding: 0;
   z-index: 3;
 }
+/* Espace sous les cases du catalogue */
+#catalogueRayonCases {
+  padding-bottom: 130px !important;
+}
