@@ -1857,3 +1857,14 @@ renderCatalogue = function() {
 
   renderCatalogueAvantModeRayon();
 };
+// ===== OUVERTURE DIRECTE D'UN RAYON =====
+document.addEventListener('click', function(e) {
+  const rayon = e.target.closest('[data-rayon]');
+  if (!rayon) return;
+
+  const nomRayon = rayon.getAttribute('data-rayon');
+  if (!nomRayon) return;
+
+  catalogueRayonMode = nomRayon;
+  afficherProduitsRayon(nomRayon);
+});
