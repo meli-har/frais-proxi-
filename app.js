@@ -3,6 +3,9 @@ const SUPABASE_KEY = 'sb_publishable_ASbg_BcoGRlcJLwsFX7utw_4hTFpBmp';
 const db = window.supabase?.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const KS='fpV4store', KC='fpV4code', KD='fpV4departments', KN='fpV4notifications', KM='fpV43magasinId', KP='fpV55products', KQ='fpV55queue', KCAT='fpV55catalogue', KDEVICE='fpV552deviceId';
+const KEMP='fpEmployeConnecte';
+
+let employeConnecte = JSON.parse(localStorage.getItem(KEMP) || 'null');
 let products=JSON.parse(localStorage.getItem(KP)||'[]'), catalogue=JSON.parse(localStorage.getItem(KCAT)||'[]'), departments=['Crèmerie','Charcuterie','Frais','Traiteur','Épicerie','Boucherie','Poissonnerie'], employees=[], currentAccess=null, scanner=false, last='', dailyMode='today', filter='all', magasinId=localStorage.getItem(KM)||null, syncTimer=null;
 const $=x=>document.getElementById(x), $$=s=>[...document.querySelectorAll(s)];
 const iso=d=>{let x=new Date(d);x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
