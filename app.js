@@ -1330,7 +1330,7 @@ function autoCatalogueRayon(name = '') {
 
   /* ===== TRAITEUR / SNACK ===== */
   if (
-    /sodebo|\bsod\b|sandwich|\bsdw\b|club|wrap|burger|pizza|quich|croque|tortilla|tagliat|fettuccini|ravioli|gnocchi|lasagne|macaroni|spaghetti|nouilles|riz cantonais|couscous|taboule|choucroute|paella|gratin|hachis|parment|ricebox|pasta box|nugget|tielle|boulette|salade|sal\.|pate feuil|pate sablee|brick/|coleslaw|piemont|macedoine|salade d alaska|salade de betterave|salade museau|salade cervelas|celeri remoulade|torti.*surimi|taboule|taboulet|ecrase.*pdt|puree.*crealine|houmous|guacamole|tzatziki|ktipiti.test(n)
+    /sodebo|\bsod\b|sandwich|\bsdw\b|club|wrap|burger|pizza|quich|croque|tortilla|tagliat|fettuccini|ravioli|gnocchi|lasagne|macaroni|spaghetti|nouilles|riz cantonais|couscous|taboule|choucroute|paella|gratin|hachis|parment|ricebox|pasta box|nugget|tielle|boulette|salade|sal\.|pate feuil|pate sablee|brick|coleslaw|piemont|macedoine|salade d alaska|salade de betterave|salade museau|salade cervelas|celeri remoulade|torti.*surimi|taboulet|ecrase.*pdt|puree.*crealine|houmous|guacamole|tzatziki|ktipiti/.test(n)
   ) {
     return 'Traiteur';
   }
