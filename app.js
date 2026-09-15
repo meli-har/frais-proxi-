@@ -1330,7 +1330,7 @@ function autoCatalogueRayon(name = '') {
 
   /* ===== TRAITEUR / SNACK ===== */
   if (
-    /sodebo|\bsod\b|sandwich|\bsdw\b|club|wrap|burger|pizza|quich|croque|tortilla|tagliat|fettuccini|ravioli|gnocchi|lasagne|macaroni|spaghetti|nouilles|riz cantonais|couscous|taboule|choucroute|paella|gratin|hachis|parment|ricebox|pasta box|nugget|tielle|boulette|salade|sal\.|pate feuil|pate sablee|brick/.test(n)
+    /sodebo|\bsod\b|sandwich|\bsdw\b|club|wrap|burger|pizza|quich|croque|tortilla|tagliat|fettuccini|ravioli|gnocchi|lasagne|macaroni|spaghetti|nouilles|riz cantonais|couscous|taboule|choucroute|paella|gratin|hachis|parment|ricebox|pasta box|nugget|tielle|boulette|salade|sal\.|pate feuil|pate sablee|brick/|coleslaw|piemont|macedoine|salade d alaska|salade de betterave|salade museau|salade cervelas|celeri remoulade|torti.*surimi|taboule|taboulet|ecrase.*pdt|puree.*crealine|houmous|guacamole|tzatziki|ktipiti.test(n)
   ) {
     return 'Traiteur';
   }
@@ -1363,12 +1363,19 @@ function autoCatalogueRayon(name = '') {
     return 'Crèmerie';
   }
 
-  /* ===== FRAIS / COMPOTES ===== */
-  if (
-    /compote|pomme abricot|pomme poire|pomme fraise|pomme peche|pomme pruneau|abricot morceaux|peche morceaux|cerise morceaux|fruit morceaux|panier.*fruit/.test(n)
-  ) {
-    return 'Frais';
-  }
+  /* ===== JUS FRAIS ===== */
+if (
+  /danao|sunny d|innoc|tropicana|jaf\.?|pur jus|jus orange|jus oran|jus pomme|jus ananas|jus multi|jus pom|smooth|mojito sans alcool|boisson cit|matin fruite/.test(n)
+) {
+  return 'Jus frais';
+}
+
+/* ===== SALADES ===== */
+if (
+  /coeur.*laitue|coeurs.*laitue|iceberg|jeunes pousses|mache|roquette|batavia|feuille chene|melange gourmand|carottes rapees|melange croquant|baby carrots|croq.*radis/.test(n)
+) {
+  return 'Salades';
+}
 
   /* ===== ŒUFS ===== */
   if (
@@ -1389,7 +1396,8 @@ function autoCatalogueRayon(name = '') {
     ['Boucherie', '🥩'],
     ['Poissonnerie', '🐟'],
     ['Traiteur', '🍽️'],
-    ['Frais', '🥬'],
+    ['Jus frais', '🧃'],
+    ['Salades', '🥗'],
     ['Pain de mie', '🍞'],
     ['Œufs', '🥚'],
     ['Brioche', '🥐'],
@@ -1664,7 +1672,7 @@ let catalogueRayonMode = null;
 function rayonReelProduit(produit) {
   const rayonExistant = (produit.rayon || '').trim();
 
-  return (!rayonExistant || rayonExistant === 'Autres')
+return (!rayonExistant || rayonExistant === 'Autres' || rayonExistant === 'Frais')
     ? autoCatalogueRayon(produit.nom || '')
     : rayonExistant;
 }
