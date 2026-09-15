@@ -1434,7 +1434,10 @@ function autoCatalogueRayon(name = '') {
     if (!bouton) return;
 
     rayonCatalogueActif = bouton.dataset.catalogueRayon;
-
+if (rayonCatalogueActif !== 'Tous') {
+  afficherProduitsRayon(rayonCatalogueActif);
+  return;
+}
     document.querySelectorAll('.catalogueRayonCase').forEach(b => {
       b.classList.toggle(
         'active',
