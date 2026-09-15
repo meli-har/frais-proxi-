@@ -1670,6 +1670,7 @@ function rayonReelProduit(produit) {
 }
 
 function afficherProduitsRayon(nomRayon) {
+ show('catalogueView'); 
   catalogueRayonMode = nomRayon;
 
   const zoneRayons = document.getElementById('catalogueRayonCases');
