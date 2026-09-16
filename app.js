@@ -83,7 +83,7 @@ function renderEmployees(){
         return `<div class="employeeManageRow ${active?'':'disabled'}">
           <div class="employeeAvatar">👤</div>
           <div class="employeeManageInfo">
-            <strong>${escapeHtml(x.nom)}</strong>
+            <strong>${x.nom}</strong>
             <small>${active?'Accès actif':'Accès désactivé'}</small>
           </div>
           <span class="rolePill">${role}</span>
