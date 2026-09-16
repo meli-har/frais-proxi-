@@ -43,7 +43,10 @@ async function ensureAnonSession(){
 }
 function deviceLabel(){let ua=navigator.userAgent||''; if(/iPhone/i.test(ua))return 'iPhone'; if(/iPad/i.test(ua))return 'iPad'; if(/Android/i.test(ua))return 'Android'; return 'Téléphone'}
 function deviceId(){let id=localStorage.getItem(KDEVICE);if(!id){id=(crypto.randomUUID?crypto.randomUUID():'dev-'+Date.now()+'-'+Math.random().toString(36).slice(2));localStorage.setItem(KDEVICE,id)}return id}
-function isAdmin(){return currentAccess?.role==='admin'&&currentAccess?.actif!==false}
+function isAdmin(){
+  if (employeConnecte) return employeConnecte.role === 'admin';
+  return currentAccess?.role === 'admin' && currentAccess?.actif !== false;
+}
 async function loadMyAccess(){
   if(!db||!magasinId)return null;
   const {data:{session}}=await db.auth.getSession();
