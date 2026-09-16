@@ -91,6 +91,42 @@ function renderEmployees(){
       }).join('')
     : '<p class="muted">Aucun employé.</p>';
 }
+async function loadActivity(){
+  const list = $('activityList');
+  if(!list || !db || !magasinId) return;
+
+  list.innerHTML = '<p class="muted">Chargement de l’historique…</p>';
+
+  const {data,error} = await db.rpc('lire_historique_activite',{
+    p_magasin_id:Number(magasinId)
+  });
+
+  if(error){
+    console.error(error);
+    list.innerHTML = '<p class="muted">Impossible de charger l’historique.</p>';
+    return;
+  }
+
+  const rows = data || [];
+
+  list.innerHTML = rows.length
+    ? rows.map(x=>{
+        const date = new Date(x.created_at).toLocaleString('fr-FR',{
+          dateStyle:'short',
+          timeStyle:'short'
+        });
+
+        return `<div class="employeeManageRow">
+          <div class="employeeAvatar">👤</div>
+          <div class="employeeManageInfo">
+            <strong>${x.employe_nom}</strong>
+            <small>${x.action}${x.details ? ' · '+x.details : ''}</small>
+            <small>${date}</small>
+          </div>
+        </div>`;
+      }).join('')
+    : '<p class="muted">Aucune activité enregistrée.</p>';
+}
 async function loadDepartmentsRemote(){
   if(!db||!magasinId){refreshDepartmentSelect();return}
   const {data,error}=await db.from('rayons').select('*').eq('magasin_id',magasinId).eq('actif',true).order('position',{ascending:true}).order('nom',{ascending:true});
@@ -259,12 +295,13 @@ async function setDoneRemote(id,done){
 }
 
 function show(id){
-  const adminViews=['storeSettingsView','employeesView','catalogueView','catalogueEditView','departmentsView','backupView'];
+  const adminViews=['storeSettingsView','employeesView','catalogueView','catalogueEditView','departmentsView',activityView,'backupView'];
   if(adminViews.includes(id)&&!isAdmin()){toast('Réservé à l’administrateur');id='settingsView'}
   stopScan();$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.view===id));
   if(id==='scanView')setTimeout(startScan,200);
   if(id==='storeSettingsView'){$('storePageInput').value='Proxi - Monéteau';$('storeCodeInput').value=localStorage.getItem(KC)||'582941'}
  if(id==='employeesView'){$('codeDisplayPage').textContent=localStorage.getItem(KC)||'582941';loadEmployees();} 
+  if(id==='activityView')loadActivity();
   if(id==='departmentsView')loadDepartmentsRemote().then(renderDepartments);if(id==='notificationsView')loadNotifications();if(id==='catalogueView')loadCatalogue();applyRoleUI();render();
 }
 function productHTML(p,check=false){let[s,c]=status(p);return `<div class="product"><div class="picon productThumb">${productPhotoHTML(p.barcode,p.name)}</div><div class="pinfo"><b>${esc(p.name)}</b><span class="badge ${c}">${s}</span><small>${fmt(p.expiry)} · ${esc(p.department)}</small><div class="productActions"><button data-add-date="${p.id}">＋ DLC</button><button data-delete-product="${p.id}">Supprimer</button></div></div><span class="qtyText">${p.quantity>1?'x'+p.quantity:''}</span>${check?`<button class="check ${p.done?'done':''}" data-done="${p.id}">${p.done?'✓':''}</button>`:''}</div>`}
