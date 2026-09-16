@@ -300,7 +300,7 @@ function show(id){
   stopScan();$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.view===id));
   if(id==='scanView')setTimeout(startScan,200);
   if(id==='storeSettingsView'){$('storePageInput').value='Proxi - Monéteau';$('storeCodeInput').value=localStorage.getItem(KC)||'582941'}
- if(id==='employeesView'){$('codeDisplayPage').textContent=localStorage.getItem(KC)||'582941';loadEmployees();} 
+ if(id==='employeesView'){loadEmployees();} 
   if(id==='activityView')loadActivity();
   if(id==='departmentsView')loadDepartmentsRemote().then(renderDepartments);if(id==='notificationsView')loadNotifications();if(id==='catalogueView')loadCatalogue();applyRoleUI();render();
 }
@@ -2092,3 +2092,21 @@ if (refreshActivityHistorique) {
     () => loadActivity()
   );
 }
+/* ===== CORRECTION AFFICHAGE RAYONS V80 ===== */
+
+function corrigerAffichageRayons() {
+  const zone = document.getElementById('catalogueRayonCases');
+  const catalogue = document.getElementById('catalogueView');
+
+  if (!zone || !catalogue) return;
+
+  if (zone.parentElement !== catalogue) {
+    catalogue.appendChild(zone);
+  }
+}
+
+document.addEventListener('click', () => {
+  setTimeout(corrigerAffichageRayons, 50);
+});
+
+setTimeout(corrigerAffichageRayons, 300);
