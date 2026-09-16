@@ -2092,21 +2092,24 @@ if (refreshActivityHistorique) {
     () => loadActivity()
   );
 }
-/* ===== CORRECTION AFFICHAGE RAYONS V80 ===== */
+/* ===== RAYONS UNIQUEMENT DANS PRODUITS V82 ===== */
 
-function corrigerAffichageRayons() {
+function placerRayonsDansProduits() {
   const zone = document.getElementById('catalogueRayonCases');
-  const catalogue = document.getElementById('catalogueView');
+  const produitsView = document.getElementById('productsView');
+  const listeProduits = document.getElementById('productList');
 
-  if (!zone || !catalogue) return;
+  if (!zone || !produitsView) return;
 
-  if (zone.parentElement !== catalogue) {
-    catalogue.appendChild(zone);
+  if (listeProduits) {
+    produitsView.insertBefore(zone, listeProduits);
+  } else {
+    produitsView.appendChild(zone);
   }
 }
 
 document.addEventListener('click', () => {
-  setTimeout(corrigerAffichageRayons, 50);
+  setTimeout(placerRayonsDansProduits, 50);
 });
 
-setTimeout(corrigerAffichageRayons, 300);
+setTimeout(placerRayonsDansProduits, 300);
