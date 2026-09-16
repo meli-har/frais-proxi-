@@ -740,3 +740,86 @@ body{
 #catalogueRayonCases {
   padding-bottom: 130px !important;
 }
+/* ===== NOUVELLE BANDEROLE ACCUEIL ===== */
+
+.homeHeroNew {
+  position: relative;
+  width: calc(100% - 24px);
+  height: 210px;
+  margin: 12px auto 14px;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #0874c9;
+  box-shadow: 0 8px 22px rgba(0,0,0,.12);
+}
+
+.homeHeroNewPhoto {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center 42%;
+}
+
+/* léger dégradé pour rendre les textes lisibles */
+.homeHeroNew::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.05) 35%,
+    rgba(0,45,95,.55) 100%
+  );
+  pointer-events: none;
+}
+
+/* DATE */
+.homeHeroNewDate {
+  position: absolute;
+  z-index: 2;
+  top: 12px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: rgba(255,255,255,.94);
+  border-radius: 15px;
+  color: #073763;
+  box-shadow: 0 3px 10px rgba(0,0,0,.12);
+}
+
+.homeHeroNewDate > span {
+  font-size: 20px;
+}
+
+.homeHeroNewDate div {
+  display: flex;
+  flex-direction: column;
+}
+
+.homeHeroNewDate b {
+  font-size: 14px;
+  line-height: 1.05;
+}
+
+.homeHeroNewDate small {
+  margin-top: 2px;
+  font-size: 10px;
+  color: #687789;
+}
+
+/* SLOGAN */
+.homeHeroNewSlogan {
+  position: absolute;
+  z-index: 2;
+  left: 18px;
+  right: 18px;
+  bottom: 14px;
+  color: white;
+  font-size: 20px;
+  line-height: 1.05;
+  font-weight: 800;
+  text-shadow: 0 2px 5px rgba(0,0,0,.45);
+}
