@@ -72,14 +72,24 @@ async function loadEmployees(){
 }
 function renderEmployees(){
   if(!$('employeeList'))return;
-  const admin=isAdmin();
-  $('employeeCount').textContent=String(employees.filter(x=>x.actif!==false).length);
-  $('employeeList').innerHTML=employees.length?employees.map(x=>{
-    const label=x.nom_affichage||x.appareil||'Appareil';
-    const role=x.role==='admin'?'Administrateur':'Employé';
-    const active=x.actif!==false;
-    return `<div class="employeeManageRow ${active?'':'disabled'}"><span class="avatarCircle"><svg class="settingsIcon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span><div class="employeeMeta"><b>${esc(label)}</b><small>${active?'Accès actif':'Accès désactivé'}</small></div><span class="rolePill small">${role}</span>${admin?`<button class="employeeAction" data-employee-role="${esc(x.user_id)}" data-current-role="${esc(x.role||'employe')}" title="Changer le rôle">⇄</button><button class="employeeAction" data-employee-active="${esc(x.user_id)}" data-current-active="${active?'1':'0'}" title="Activer ou désactiver">${active?'⊘':'✓'}</button>`:''}</div>`
-  }).join(''):'<p class="muted">Aucun accès trouvé.</p>';
+
+  $('employeeCount').textContent=String(employees.length);
+
+  $('employeeList').innerHTML=employees.length
+    ? employees.map(x=>{
+        const role=x.role==='admin'?'Administrateur':'Employé';
+        const active=x.actif!==false;
+
+        return `<div class="employeeManageRow ${active?'':'disabled'}">
+          <div class="employeeAvatar">👤</div>
+          <div class="employeeManageInfo">
+            <strong>${escapeHtml(x.nom)}</strong>
+            <small>${active?'Accès actif':'Accès désactivé'}</small>
+          </div>
+          <span class="rolePill">${role}</span>
+        </div>`;
+      }).join('')
+    : '<p class="muted">Aucun employé.</p>';
 }
 async function loadDepartmentsRemote(){
   if(!db||!magasinId){refreshDepartmentSelect();return}
