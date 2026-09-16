@@ -304,7 +304,14 @@ function startScan(){
 function onDetected(r){let code=r?.codeResult?.code;if(!code||code===last)return;last=code;navigator.vibrate?.(80);stopScan();identifyBarcode(code)}
 function stopScan(){if(scanner&&window.Quagga){try{Quagga.stop()}catch(e){}scanner=false}}
 
-$('startBtn').onclick=()=>{$('welcome').classList.add('hidden');$('login').classList.remove('hidden');$('shopCode').value=localStorage.getItem(KC)||'582941'};
+$('startBtn').onclick=()=>{
+  $('welcome').classList.add('hidden');
+  if(magasinId){
+    $('employeeLogin').classList.remove('hidden');
+  }else{
+    $('login').classList.remove('hidden');
+  }
+};
 $('loginBtn').onclick=async()=>{let c=$('shopCode').value.trim();if(c.length<4)return toast('Entrez le code magasin');$('loginBtn').disabled=true;try{await connectStore(c);$('login').classList.add('hidden');$('app').classList.remove('hidden');render();toast('Magasin connecté')}catch(e){console.error('Connexion Frais Proxi:',e);const msg=(e?.message||'Connexion impossible').trim();setSync(msg);if(/anonymous sign-ins are disabled/i.test(msg))toast('Connexion anonyme non encore active côté Supabase');else if(/invalid|code magasin|incorrect/i.test(msg))toast('Code magasin incorrect');else toast('Connexion impossible : '+msg.slice(0,80))}finally{$('loginBtn').disabled=false}};
 $$('[data-view]').forEach(b=>b.onclick=()=>show(b.dataset.view));$$('[data-daily]').forEach(b=>b.onclick=()=>openDaily(b.dataset.daily));$('addBtn').onclick=()=>{resetDlcRows();show('addView')};$('scanTab').onclick=()=>show('scanView');
 $('productForm').onsubmit=async e=>{e.preventDefault();if(!magasinId)return toast('Reconnectez le magasin');const base={name:$('name').value.trim(),department:$('department').value,note:$('note').value.trim(),barcode:$('barcode').value};const rows=$$('.dlcEntry').map(r=>({expiry:r.querySelector('.dlcDate').value,quantity:+r.querySelector('.dlcQty').value||1})).filter(x=>x.expiry);if(!rows.length)return toast('Ajoutez au moins une DLC');try{for(const row of rows)await addProductSmart({...base,...row});if(navigator.onLine)await rememberCatalogueProduct(base);e.target.reset();resetDlcRows();toast(rows.length+' DLC enregistrée'+(rows.length>1?'s':''));show('homeView')}catch(err){console.error(err);toast('Impossible d’ajouter les DLC')}};
