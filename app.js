@@ -62,10 +62,13 @@ function applyRoleUI(){
   if($('storeCodeCard'))$('storeCodeCard').classList.toggle('adminHidden',!admin);
 }
 async function loadEmployees(){
-  if(!db||!magasinId)return;
-  const {data,error}=await db.from('acces_magasin').select('*').eq('magasin_id',magasinId);
-  if(error){console.error(error);toast('Accès équipe indisponibles');return}
-  employees=data||[];renderEmployees();
+  if(!db || !magasinId)return;
+  const {data,error}=await db.rpc('lister_employes_app',{
+    p_magasin_id:Number(magasinId)
+  });
+  if(error){console.error(error);toast('Impossible de charger les employés');return;}
+  employees=data||[];
+  renderEmployees();
 }
 function renderEmployees(){
   if(!$('employeeList'))return;
