@@ -1941,7 +1941,7 @@ if (employeeLoginBtn) {
 
       $('employeeLogin').classList.add('hidden');
       $('app').classList.remove('hidden');
-
+applyRoleUI();
       toast('Bonjour ' + employe.nom + ' 👋');
     } catch (e) {
       console.error(e);
