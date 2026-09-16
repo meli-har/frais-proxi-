@@ -1999,3 +1999,96 @@ applyRoleUI();
     }
   });
 }
+/* ===== HISTORIQUE COMPLET ACTIVITÉ EMPLOYÉS V1 ===== */
+
+async function enregistrerActivite(action, details = '') {
+  if (!db || !magasinId || !employeConnecte?.id) return;
+
+  try {
+    const { error } = await db.rpc('enregistrer_activite', {
+      p_magasin_id: Number(magasinId),
+      p_employe_id: Number(employeConnecte.id),
+      p_action: String(action),
+      p_details: details ? String(details).slice(0, 500) : null
+    });
+
+    if (error) {
+      console.warn('Historique activité :', error);
+    }
+  } catch (e) {
+    console.warn('Historique activité :', e);
+  }
+}
+
+/* AJOUT D'UNE DLC */
+const addProductSmartHistorique = addProductSmart;
+
+addProductSmart = async function(p) {
+  const resultat = await addProductSmartHistorique(p);
+
+  await enregistrerActivite(
+    'Ajout DLC',
+    `${p.name || 'Produit'} · DLC ${p.expiry || '-'} · Qté ${p.quantity || 1}${p.barcode ? ' · EAN ' + p.barcode : ''}`
+  );
+
+  return resultat;
+};
+
+/* SUPPRESSION D'UNE DLC */
+const deleteProductSmartHistorique = deleteProductSmart;
+
+deleteProductSmart = async function(p) {
+  const id = p?.id;
+
+  const details =
+    `${p?.name || 'Produit'} · DLC ${p?.expiry || '-'} · Qté ${p?.quantity || 1}` +
+    `${p?.barcode ? ' · EAN ' + p.barcode : ''}`;
+
+  const resultat = await deleteProductSmartHistorique(p);
+
+  const existeEncore = products.some(
+    x => String(x.id) === String(id)
+  );
+
+  if (!existeEncore) {
+    await enregistrerActivite(
+      'Suppression DLC',
+      details
+    );
+  }
+
+  return resultat;
+};
+
+/* PRODUIT RETIRÉ / REMIS EN ATTENTE */
+const setDoneRemoteHistorique = setDoneRemote;
+
+setDoneRemote = async function(id, done) {
+  const produit = products.find(
+    x => String(x.id) === String(id)
+  );
+
+  const resultat =
+    await setDoneRemoteHistorique(id, done);
+
+  await enregistrerActivite(
+    done
+      ? 'Produit retiré'
+      : 'Produit remis en attente',
+
+    `${produit?.name || 'Produit'} · DLC ${produit?.expiry || '-'} · Qté ${produit?.quantity || 1}${produit?.barcode ? ' · EAN ' + produit.barcode : ''}`
+  );
+
+  return resultat;
+};
+
+/* ACTUALISER L'HISTORIQUE */
+const refreshActivityHistorique =
+  document.getElementById('refreshActivity');
+
+if (refreshActivityHistorique) {
+  refreshActivityHistorique.addEventListener(
+    'click',
+    () => loadActivity()
+  );
+}
