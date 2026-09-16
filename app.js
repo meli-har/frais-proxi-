@@ -379,7 +379,7 @@ window.addEventListener('focus',()=>{flushQueue();loadProducts(true)});window.ad
   try{
     if(!db)return;
     const {data:{session}}=await db.auth.getSession();
-    if(session && magasinId){await loadMyAccess();if(currentAccess?.actif===false){localStorage.removeItem(KM);magasinId=null;return}await loadDepartmentsRemote();await loadCatalogue();$('welcome').classList.add('hidden');$('login').classList.add('hidden');$('app').classList.remove('hidden');await loadProducts(true);startSyncTimer();applyRoleUI();render()}
+    if(session && magasinId){await loadMyAccess();if(currentAccess?.actif===false){localStorage.removeItem(KM);magasinId=null;return}await loadDepartmentsRemote();await loadCatalogue();await loadProducts(true);startSyncTimer();applyRoleUI();render();}
   }catch(e){console.error(e)}
 })();
 
