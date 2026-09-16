@@ -264,7 +264,7 @@ function show(id){
   stopScan();$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.view===id));
   if(id==='scanView')setTimeout(startScan,200);
   if(id==='storeSettingsView'){$('storePageInput').value='Proxi - Monéteau';$('storeCodeInput').value=localStorage.getItem(KC)||'582941'}
-  if(id==='employeesView'){$('codeDisplayPage').textContent=localStorage.getItem(KC)||'582941';loadEmployees()}
+ if(id==='employeesView'){$('codeDisplayPage').textContent=localStorage.getItem(KC)||'582941';loadEmployees();} 
   if(id==='departmentsView')loadDepartmentsRemote().then(renderDepartments);if(id==='notificationsView')loadNotifications();if(id==='catalogueView')loadCatalogue();applyRoleUI();render();
 }
 function productHTML(p,check=false){let[s,c]=status(p);return `<div class="product"><div class="picon productThumb">${productPhotoHTML(p.barcode,p.name)}</div><div class="pinfo"><b>${esc(p.name)}</b><span class="badge ${c}">${s}</span><small>${fmt(p.expiry)} · ${esc(p.department)}</small><div class="productActions"><button data-add-date="${p.id}">＋ DLC</button><button data-delete-product="${p.id}">Supprimer</button></div></div><span class="qtyText">${p.quantity>1?'x'+p.quantity:''}</span>${check?`<button class="check ${p.done?'done':''}" data-done="${p.id}">${p.done?'✓':''}</button>`:''}</div>`}
