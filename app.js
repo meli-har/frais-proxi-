@@ -1909,3 +1909,33 @@ document.addEventListener('click', function(e) {
   catalogueRayonMode = nomRayon;
   afficherProduitsRayon(nomRayon);
 });
+const employeeLoginBtn = $('employeeLoginBtn');
+
+if (employeeLoginBtn) {
+  employeeLoginBtn.addEventListener('click', async () => {
+    const code = $('employeeCode').value.trim();
+    const message = $('employeeLoginError');
+
+    if (!code) {
+      message.textContent = 'Entrez votre code personnel.';
+      return;
+    }
+
+    message.textContent = 'Connexion…';
+
+    try {
+      const employe = await connecterEmploye(code);
+
+      message.textContent = '';
+      $('employeeCode').value = '';
+
+      $('employeeLogin').classList.add('hidden');
+      $('app').classList.remove('hidden');
+
+      toast('Bonjour ' + employe.nom + ' 👋');
+    } catch (e) {
+      console.error(e);
+      message.textContent = 'Code personnel incorrect.';
+    }
+  });
+}
