@@ -29,9 +29,24 @@
 </section>
   <div id="app" class="hidden"><header class="top"><button id="menuBtn" class="topIconBtn" aria-label="Menu"><svg class="uiIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div class="brand">Frais <span>Proxi</span><img src="logo-leclerc-clean.png" class="headerLeclercLogo" alt="E.Leclerc"></div><button id="teamBtn" class="topIconBtn" aria-label="Équipe"><svg class="uiIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></button></header><main>
 <section id="homeView" class="view active homeV57">
-<div class="homeHeroV57">
-  <div class="heroBrandLine"><div class="miniBrand">Frais <span>Proxi</span><small>Monéteau</small></div><div class="leclercMark"><b>L</b></div></div>
-  <div class="heroContentV57"><div class="heroCopyV57"><span class="hello">Bonjour ! 👋</span><strong id="heroStoreName">Proxi - Monéteau</strong><p>Ensemble pour des produits frais, sûrs et de qualité !</p><div class="heroDateV57"><span>▣</span><div><b id="heroDateText"></b><small>Aujourd'hui</small></div></div></div><div class="heroVisualV57"><em>Des produits sûrs<br>toute la journée</em><div class="shelfGlow"></div><div class="heroLeclercText"><img src="logo-leclerc-clean.png" class="heroLeclercLogo" alt="E.Leclerc"></div></div></div>
+<div class="homeHeroNew">
+  <img
+    src="banniere-leclerc-moneteau.png"
+    class="homeHeroNewPhoto"
+    alt="E.Leclerc Monéteau"
+  >
+
+  <div class="homeHeroNewDate">
+    <span>▣</span>
+    <div>
+      <b id="heroDateText"></b>
+      <small>Aujourd'hui</small>
+    </div>
+  </div>
+
+  <div class="homeHeroNewSlogan">
+    À très vite pour récupérer<br>vos courses.
+  </div>
 </div>
 <div class="homeAlerts"><button class="miniAlert red" data-daily="today"><span class="miniIcon">⚠</span><span class="ghostIcon">▥</span><strong id="todayCount">0</strong><b>À retirer<br>aujourd'hui</b><em>›</em></button><button class="miniAlert orange" data-daily="tomorrow"><span class="miniIcon">◷</span><span class="ghostIcon">▣</span><strong id="tomorrowCount">0</strong><b>À surveiller<br>demain</b><em>›</em></button><button class="miniAlert green" data-view="statsView"><span class="miniIcon">✓</span><span class="ghostIcon">☷</span><strong id="weekCount">0</strong><b>Cette semaine</b><em>›</em></button></div>
 <div class="homeStats"><div><span>📦</span><strong id="homeProductStat">0</strong><small>Produits suivis</small></div><div><span>▦</span><strong id="homeRayonStat">0</strong><small>Rayons enregistrés</small></div><div><span>♙</span><strong id="homeTeamStat">1</strong><small>Employés actifs</small></div><div><span>▥</span><strong id="homeDlcStat">0</strong><small>DLC cette semaine</small></div></div>
