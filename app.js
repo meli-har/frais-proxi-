@@ -81,6 +81,32 @@ async function loadDepartmentsRemote(){
   if(!error&&data?.length)departments=data.map(x=>x.nom);
   refreshDepartmentSelect();fillCatalogueDepartments();
 }
+async function connecterEmploye(code) {
+  if (!db || !magasinId) {
+    throw new Error('Magasin non connecté');
+  }
+
+  const { data, error } = await db.rpc('connexion_employe', {
+    p_magasin_id: Number(magasinId),
+    p_code: String(code).trim()
+  });
+
+  if (error) throw error;
+
+  if (!data || !data.length) {
+    throw new Error('Code employé incorrect');
+  }
+
+  employeConnecte = {
+    id: data[0].employe_id,
+    nom: data[0].nom,
+    role: data[0].role
+  };
+
+  localStorage.setItem(KEMP, JSON.stringify(employeConnecte));
+
+  return employeConnecte;
+}
 async function connectStore(code){
   setSync('Connexion…');
   await ensureAnonSession();
