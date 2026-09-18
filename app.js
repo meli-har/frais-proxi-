@@ -2306,3 +2306,91 @@ render = function() {
 
 /* Premier affichage */
 actualiserEANV84();
+/* ===== AFFICHER LES DLC DEJA ENREGISTREES V84 ===== */
+
+function afficherDlcExistantesV84() {
+  const form = document.getElementById('productForm');
+  const barcodeInput = document.getElementById('barcode');
+  const dlcRows = document.getElementById('dlcRows');
+
+  if (!form || !barcodeInput || !dlcRows) return;
+
+  let zone = document.getElementById('existingDlcV84');
+
+  if (!zone) {
+    zone = document.createElement('div');
+    zone.id = 'existingDlcV84';
+    zone.className = 'existingDlcV84';
+
+    dlcRows.parentElement.appendChild(zone);
+  }
+
+  const code = String(barcodeInput.value || '').trim();
+
+  if (!code) {
+    zone.innerHTML = '';
+    zone.style.display = 'none';
+    return;
+  }
+
+  const dates = products
+    .filter(p =>
+      String(p.barcode || '').trim() === code &&
+      !p.done &&
+      p.expiry
+    )
+    .map(p => p.expiry)
+    .filter((date, index, array) => array.indexOf(date) === index)
+    .sort();
+
+  if (!dates.length) {
+    zone.innerHTML = `
+      <div class="existingDlcTitle">
+        Dates déjà enregistrées
+      </div>
+      <small>Aucune DLC enregistrée pour ce produit.</small>
+    `;
+    zone.style.display = 'block';
+    return;
+  }
+
+  zone.innerHTML = `
+    <div class="existingDlcTitle">
+      Dates déjà enregistrées
+    </div>
+
+    <div class="existingDlcDates">
+      ${dates.map(date => `
+        <div class="existingDlcDate">
+          📅 ${fmt(date)}
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  zone.style.display = 'block';
+}
+
+
+/* Actualise les dates lorsqu'un produit est ouvert */
+function actualiserDlcExistantesV84() {
+  setTimeout(afficherDlcExistantesV84, 100);
+  setTimeout(afficherDlcExistantesV84, 400);
+}
+
+document.addEventListener('click', actualiserDlcExistantesV84);
+
+
+/* Si l'EAN change manuellement */
+const barcodeV84 = document.getElementById('barcode');
+
+if (barcodeV84) {
+  barcodeV84.addEventListener(
+    'input',
+    afficherDlcExistantesV84
+  );
+}
+
+
+/* Premier contrôle */
+actualiserDlcExistantesV84();
