@@ -2239,3 +2239,70 @@ document.addEventListener('click', () => {
 });
 
 setTimeout(retirerQuantitesV83, 300);
+/* ===== AFFICHAGE EAN DANS TOUTES LES LISTES DLC V84 ===== */
+
+function ajouterEANListesV84() {
+  const zones = [
+    'dailyList',
+    'planningList',
+    'productList',
+    'retroList',
+    'casseList',
+    'homeRecent'
+  ];
+
+  zones.forEach(zoneId => {
+    const zone = document.getElementById(zoneId);
+    if (!zone) return;
+
+    /* Recherche les lignes/cartes contenant une DLC */
+    zone.querySelectorAll(
+      '.item, .productRow, .dailyItem, .planningItem, .planningProduct, .retroItem, .casseItem, .dlcMiniRow'
+    ).forEach(card => {
+
+      /* Évite d'ajouter deux fois l'EAN */
+      if (card.querySelector('.eanV84')) return;
+
+      /* Recherche le produit correspondant grâce à son nom */
+      const texte = (card.textContent || '').toLowerCase();
+
+      const produit = products.find(p => {
+        const nom = String(p.name || '').trim().toLowerCase();
+        return nom && texte.includes(nom);
+      });
+
+      if (!produit?.barcode) return;
+
+      const info = card.querySelector(
+        '.pinfo, .productInfo, .dailyInfo, .planningInfo'
+      ) || card.querySelector('div');
+
+      if (!info) return;
+
+      const ean = document.createElement('small');
+      ean.className = 'eanV84';
+      ean.textContent = 'EAN : ' + produit.barcode;
+
+      info.appendChild(ean);
+    });
+  });
+}
+
+function actualiserEANV84() {
+  setTimeout(ajouterEANListesV84, 100);
+  setTimeout(ajouterEANListesV84, 400);
+}
+
+/* À chaque changement de page */
+document.addEventListener('click', actualiserEANV84);
+
+/* Après les mises à jour automatiques */
+const renderEANV84 = render;
+render = function() {
+  const resultat = renderEANV84.apply(this, arguments);
+  actualiserEANV84();
+  return resultat;
+};
+
+/* Premier affichage */
+actualiserEANV84();
