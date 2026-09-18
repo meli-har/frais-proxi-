@@ -2394,3 +2394,12 @@ if (barcodeV84) {
 
 /* Premier contrôle */
 actualiserDlcExistantesV84();
+/* ===== CORRECTION FICHE PRODUIT QUI REVIENT AU RAYON V86 ===== */
+
+document.addEventListener('click', e => {
+  const produit = e.target.closest('.catalogueItem[data-cat-id]');
+  if (!produit) return;
+
+  // On quitte temporairement le mode rayon pendant l'ouverture de la fiche
+  catalogueRayonMode = null;
+}, true);
