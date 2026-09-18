@@ -2113,3 +2113,129 @@ document.addEventListener('click', () => {
 });
 
 setTimeout(placerRayonsDansProduits, 300);
+/* ===== DLC SANS QUANTITE + AFFICHAGE EAN V83 ===== */
+
+/* Une ligne = uniquement une date de DLC */
+dlcRowHTML = function(date = iso(today()), qtyValue = 1, removable = true) {
+  return `
+    <div class="dlcEntry dlcEntryV83">
+      <label>
+        Date de DLC
+        <input class="dlcDate" type="date" required value="${esc(date)}">
+      </label>
+
+      <button
+        type="button"
+        class="removeDlcRow ${removable ? '' : 'hidden'}"
+        aria-label="Supprimer cette date"
+      >×</button>
+    </div>
+  `;
+};
+
+/* Remet une première date sans quantité */
+resetDlcRows = function(date = iso(today()), qtyValue = 1) {
+  const box = $('dlcRows');
+  if (!box) return;
+
+  box.innerHTML = dlcRowHTML(date, 1, false);
+  refreshDlcRemoveButtons();
+};
+
+/* Affichage des produits :
+   - nom
+   - EAN
+   - rayon
+   - dates
+   - aucune quantité
+*/
+productGroupHTML = function(g) {
+  const items = [...g.items].sort(
+    (a, b) => String(a.expiry).localeCompare(String(b.expiry))
+  );
+
+  return `
+    <div class="productGroup">
+
+      <div class="productGroupTop">
+        <div class="groupPhoto">
+          ${productPhotoHTML(g.barcode, g.name)}
+        </div>
+
+        <div class="pinfo">
+          <b>${esc(g.name)}</b>
+
+          ${
+            g.barcode
+              ? `<small class="productEAN">EAN : ${esc(g.barcode)}</small>`
+              : `<small class="productEAN">EAN non renseigné</small>`
+          }
+
+          <small>${esc(g.department)}</small>
+        </div>
+      </div>
+
+      <div class="dlcMiniList">
+        ${items.map(p => {
+          const [s, c] = status(p);
+
+          return `
+            <div class="dlcMiniRow">
+              <div>
+                <span class="badge ${c}">${s}</span>
+                <b>${fmt(p.expiry)}</b>
+              </div>
+
+              <button data-delete-product="${p.id}">
+                Supprimer
+              </button>
+            </div>
+          `;
+        }).join('')}
+      </div>
+
+      <button
+        class="addGroupDlc"
+        data-add-date="${items[0]?.id || ''}"
+      >
+        ＋ Ajouter une DLC
+      </button>
+
+    </div>
+  `;
+};
+
+/* Même si l'ancienne interface transmet une quantité,
+   chaque DLC est maintenant enregistrée comme 1 date */
+const addProductRemoteV83 = addProductRemote;
+
+addProductRemote = async function(p, noReload = false) {
+  p.quantity = 1;
+  return await addProductRemoteV83(p, noReload);
+};
+
+/* Masque les anciens éléments quantité encore présents dans le HTML */
+function retirerQuantitesV83() {
+  document.querySelectorAll('.dlcEntry').forEach(row => {
+    row.querySelectorAll('label').forEach(label => {
+      if (/quantité/i.test(label.textContent || '')) {
+        label.style.display = 'none';
+      }
+    });
+
+    row.querySelectorAll('.quantity, .compactQty, .dlcQty').forEach(el => {
+      el.style.display = 'none';
+    });
+  });
+
+  document.querySelectorAll('.groupQty').forEach(el => {
+    el.style.display = 'none';
+  });
+}
+
+/* Nettoyage automatique après les changements d'écran */
+document.addEventListener('click', () => {
+  setTimeout(retirerQuantitesV83, 50);
+});
+
+setTimeout(retirerQuantitesV83, 300);
