@@ -295,7 +295,7 @@ async function setDoneRemote(id,done){
 }
 
 function show(id){
-  const adminViews=['storeSettingsView','employeesView','catalogueView','catalogueEditView','departmentsView',activityView,'backupView'];
+  const adminViews=['storeSettingsView','employeesView','catalogueView','catalogueEditView','departmentsView','activityView','backupView'];
   if(adminViews.includes(id)&&!isAdmin()){toast('Réservé à l’administrateur');id='settingsView'}
   stopScan();$$('.view').forEach(v=>v.classList.toggle('active',v.id===id));$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.view===id));
   if(id==='scanView')setTimeout(startScan,200);
