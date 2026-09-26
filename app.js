@@ -1028,56 +1028,69 @@ if(saveRayonBtn){
 }
 /* ===== LISTES RETRO / CASSE ===== */
 
-function regleCasseProduit(p){
+ function regleProduitRetroCasse(p){
   const catalogueRow = catalogue.find(
     x => String(x.code_barres || '') === String(p.barcode || '')
   );
 
-  const rayon = String(
-    catalogueRow?.rayon || p.department || ''
-  ).toLowerCase()
-   .normalize('NFD')
-   .replace(/[\u0300-\u036f]/g, '');
+  const rayon = String(catalogueRow?.rayon || p.department || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
 
   const nom = String(p.name || '')
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 
-  /* CREMERIE / YAOURTS : casse J-6, rétro J-7 */
+  // Crèmerie : rétro J-6 / casse J-5
   if(
     rayon.includes('cremerie') ||
     /yaourt|\byrt\b|yogourt|yogurt|skyr|fromage blanc/.test(nom)
   ){
-    return 6;
+    return { retro:6, casse:5, categorie:'Crèmerie' };
   }
 
-  /* PAIN DE MIE / BRIOCHE / CHARCUTERIE : casse J-5, rétro J-6 */
+  // Pain de mie / Charcuterie / Brioche : rétro J-5 / casse J-4
   if(
     rayon.includes('charcuterie') ||
     /pain de mie|pdm|brioche/.test(nom)
   ){
-    return 5;
+    return { retro:5, casse:4, categorie:'Pain de mie / Charcuterie / Brioche' };
   }
 
-  /* SNACK / SALADES : casse J-2, rétro J-3 */
+  // Snack / Salade : rétro J-2 / casse J-1
   if(
     /sandwich|sdw|club|wrap|burger|baguette|snack|salade|slde/.test(nom)
   ){
-    return 2;
+    return { retro:2, casse:1, categorie:'Snack / Salade' };
   }
 
-  /* BOUCHERIE / VOLAILLE / SAURISSERIE : casse J-2, rétro J-3 */
+  // Boucherie / Volaille / Saurisserie : rétro J-2 / casse J-1
   if(
     rayon.includes('boucherie') ||
     rayon.includes('volaille') ||
     rayon.includes('saurisserie') ||
     /poulet|plet|dinde|dde|boeuf|bœuf|veau|agneau|steak|escalope|volaille|saurisserie/.test(nom)
   ){
-    return 2;
+    return { retro:2, casse:1, categorie:'Boucherie / Volaille / Saurisserie' };
   }
 
   return null;
+}
+
+function dateMoinsJours(dateIso, jours){
+  const d = new Date(dateIso + 'T00:00:00');
+  d.setDate(d.getDate() - jours);
+  return d;
+}
+
+function dateCourte(d){
+  return new Intl.DateTimeFormat('fr-FR',{
+    day:'2-digit',
+    month:'2-digit',
+    year:'numeric'
+  }).format(d);
 }
 
 function joursAvantDlc(dateIso){
@@ -1092,6 +1105,31 @@ function joursAvantDlc(dateIso){
   return Math.round((dlc - aujourdHui) / 86400000);
 }
 
+function charteRetroHTML(){
+  return `
+    <div class="card" style="margin-bottom:16px">
+      <b>📋 CHARTE RÉTRO / CASSE</b>
+
+      <p><b>Crèmerie</b><br>
+      Rétro J-6 • Casse J-5</p>
+
+      <p><b>Pain de mie / Charcuterie / Brioche</b><br>
+      Rétro J-5 • Casse J-4</p>
+
+      <p><b>Snack / Salade</b><br>
+      Rétro J-2 • Casse J-1</p>
+
+      <p><b>Salade sachet</b><br>
+      Rétro J-2 • Casse J-1</p>
+
+      <p><b>Boucherie / Volaille / Saurisserie</b><br>
+      Rétro J-2 • Casse J-1</p>
+
+      <small>💡 Les produits apparaissent 1 jour avant pour préparer le travail.</small>
+    </div>
+  `;
+}
+
 function renderRetroCasse(){
   const retroList = $('retroList');
   const casseList = $('casseList');
@@ -1104,41 +1142,92 @@ function renderRetroCasse(){
   products
     .filter(p => !p.done && p.expiry)
     .forEach(p => {
-      const seuilCasse = regleCasseProduit(p);
-      if(seuilCasse === null) return;
+
+      const regle = regleProduitRetroCasse(p);
+      if(!regle) return;
 
       const jours = joursAvantDlc(p.expiry);
       if(jours === null) return;
 
-      if(jours === seuilCasse + 1){
-        retro.push({...p, jours, seuilCasse});
-      }else if(jours <= seuilCasse){
-        casse.push({...p, jours, seuilCasse});
+      const dateRetro = dateMoinsJours(p.expiry, regle.retro);
+      const dateCasse = dateMoinsJours(p.expiry, regle.casse);
+
+      const produit = {
+        ...p,
+        regle,
+        jours,
+        dateRetro,
+        dateCasse
+      };
+
+      // Visible la veille de la rétro
+      if(jours === regle.retro + 1 || jours === regle.retro){
+        retro.push(produit);
+      }
+
+      // Visible la veille du passage en casse et ensuite
+      if(jours <= regle.casse + 1){
+        casse.push(produit);
       }
     });
 
-  retro.sort((a,b) => String(a.expiry).localeCompare(String(b.expiry)));
-  casse.sort((a,b) => String(a.expiry).localeCompare(String(b.expiry)));
+  retro.sort((a,b) =>
+    String(a.expiry).localeCompare(String(b.expiry))
+  );
 
-  retroList.innerHTML = retro.length
-    ? retro.map(p => `
-        <div class="card">
-          <b>${esc(p.name || 'Produit')}</b>
-          <p>DLC : ${fmt(p.expiry)} • Quantité : ${p.quantity || 1}</p>
-          <small>Rétro J-${p.jours} → casse à J-${p.seuilCasse}</small>
-        </div>
-      `).join('')
-    : '<div class="card">Aucun produit en rétro aujourd’hui.</div>';
+  casse.sort((a,b) =>
+    String(a.expiry).localeCompare(String(b.expiry))
+  );
 
-  casseList.innerHTML = casse.length
-    ? casse.map(p => `
-        <div class="card">
-          <b>${esc(p.name || 'Produit')}</b>
-          <p>DLC : ${fmt(p.expiry)} • Quantité : ${p.quantity || 1}</p>
-          <small>${p.jours < 0 ? 'DLC dépassée' : 'Casse J-' + p.jours}</small>
-        </div>
-      `).join('')
-    : '<div class="card">Aucun produit en casse aujourd’hui.</div>';
+  retroList.innerHTML =
+    charteRetroHTML() +
+    (retro.length
+      ? retro.map(p => `
+          <div class="card">
+            <b>${esc(p.name || 'Produit')}</b>
+
+            <p>
+              DLC : <b>${fmt(p.expiry)}</b>
+            </p>
+
+            <p>
+              🟠 <b>RÉTRO</b><br>
+              ${dateCourte(p.dateRetro)}
+            </p>
+
+            <p>
+              🔴 <b>PASSAGE EN CASSE</b><br>
+              ${dateCourte(p.dateCasse)}
+            </p>
+          </div>
+        `).join('')
+      : '<div class="card">Aucun produit à préparer en rétro.</div>'
+    );
+
+  casseList.innerHTML =
+    charteRetroHTML() +
+    (casse.length
+      ? casse.map(p => `
+          <div class="card">
+            <b>${esc(p.name || 'Produit')}</b>
+
+            <p>
+              DLC : <b>${fmt(p.expiry)}</b>
+            </p>
+
+            <p>
+              🟠 <b>RÉTRO</b><br>
+              ${dateCourte(p.dateRetro)}
+            </p>
+
+            <p>
+              🔴 <b>PASSAGE EN CASSE</b><br>
+              ${dateCourte(p.dateCasse)}
+            </p>
+          </div>
+        `).join('')
+      : '<div class="card">Aucun produit à préparer pour la casse.</div>'
+    );
 }
 
 document.addEventListener('click', e => {
@@ -1151,7 +1240,7 @@ document.addEventListener('click', e => {
   setTimeout(() => {
     renderRetroCasse();
   }, 0);
-});
+}); 
 /* ===== CLASSEMENT AUTO CATALOGUE V2 ===== */
 
 function autoCatalogueRayon(name=''){
