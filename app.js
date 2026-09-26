@@ -1201,15 +1201,23 @@ function renderRetroCasse(){
               DLC : <b>${fmt(p.expiry)}</b>
             </p>
 
-            <p>
-              🟠 <b>RÉTRO</b><br>
-              ${dateCourte(p.dateRetro)}
-            </p>
+          <div class="retroDates">
 
-            <p>
-              🔴 <b>PASSAGE EN CASSE</b><br>
-              ${dateCourte(p.dateCasse)}
-            </p>
+  <div class="retroDateBox">
+    <span class="retroDateLabel">🟠 RÉTRO</span>
+    <span class="retroDateValue">
+      ${dateCourte(p.dateRetro)}
+    </span>
+  </div>
+
+  <div class="casseDateBox">
+    <span class="retroDateLabel">🔴 CASSE</span>
+    <span class="retroDateValue">
+      ${dateCourte(p.dateCasse)}
+    </span>
+  </div>
+
+</div>  
           </div>
         `).join('')
       : '<div class="card">Aucun produit à préparer en rétro.</div>'
@@ -1226,15 +1234,23 @@ function renderRetroCasse(){
               DLC : <b>${fmt(p.expiry)}</b>
             </p>
 
-            <p>
-              🟠 <b>RÉTRO</b><br>
-              ${dateCourte(p.dateRetro)}
-            </p>
+   <div class="retroDates">
 
-            <p>
-              🔴 <b>PASSAGE EN CASSE</b><br>
-              ${dateCourte(p.dateCasse)}
-            </p>
+  <div class="retroDateBox">
+    <span class="retroDateLabel">🟠 RÉTRO</span>
+    <span class="retroDateValue">
+      ${dateCourte(p.dateRetro)}
+    </span>
+  </div>
+
+  <div class="casseDateBox">
+    <span class="retroDateLabel">🔴 CASSE</span>
+    <span class="retroDateValue">
+      ${dateCourte(p.dateCasse)}
+    </span>
+  </div>
+
+</div>         
           </div>
         `).join('')
       : '<div class="card">Aucun produit à préparer pour la casse.</div>'
