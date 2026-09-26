@@ -2558,3 +2558,96 @@ document.addEventListener('click', e => {
   // On quitte temporairement le mode rayon pendant l'ouverture de la fiche
   catalogueRayonMode = null;
 }, true);
+/* ===== V90 - RAYON AUTOMATIQUE PAR EAN ===== */
+
+const addProductSmartAvantRayonV90 = addProductSmart;
+
+addProductSmart = async function(p) {
+
+  const ean = String(p.barcode || '').trim();
+
+  if (ean) {
+    const produitCatalogue = catalogue.find(
+      x => String(x.code_barres || '').trim() === ean
+    );
+
+    if (produitCatalogue?.rayon) {
+      p = {
+        ...p,
+        department: produitCatalogue.rayon
+      };
+    }
+  }
+
+  return await addProductSmartAvantRayonV90(p);
+};
+/* ===== V90 - EAN SOUS LES PRODUITS ===== */
+
+function afficherEANPartoutV90() {
+  const zones = [
+    'productList',
+    'dailyList',
+    'planningList',
+    'retroList',
+    'casseList',
+    'homeRecent'
+  ];
+
+  zones.forEach(zoneId => {
+    const zone = document.getElementById(zoneId);
+    if (!zone) return;
+
+    const cartes = zone.querySelectorAll(
+      '.product, .card, .planningProduct, button[data-add-date]'
+    );
+
+    cartes.forEach(carte => {
+      if (carte.querySelector('.eanV90')) return;
+
+      const texte = String(carte.textContent || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+      const produit = products.find(p => {
+        const nom = String(p.name || '')
+          .trim()
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '');
+
+        return nom && texte.includes(nom);
+      });
+
+      if (!produit?.barcode) return;
+
+      const nomElement =
+        carte.querySelector('.pinfo b') ||
+        carte.querySelector('.planningProduct b') ||
+        carte.querySelector('b');
+
+      if (!nomElement) return;
+
+      const ean = document.createElement('small');
+      ean.className = 'eanV90';
+      ean.textContent = 'EAN : ' + produit.barcode;
+
+      ean.style.display = 'block';
+      ean.style.marginTop = '4px';
+      ean.style.fontSize = '12px';
+      ean.style.fontWeight = '500';
+      ean.style.color = '#6b7c89';
+
+      nomElement.insertAdjacentElement('afterend', ean);
+    });
+  });
+}
+
+function actualiserEANPartoutV90() {
+  setTimeout(afficherEANPartoutV90, 100);
+  setTimeout(afficherEANPartoutV90, 400);
+}
+
+document.addEventListener('click', actualiserEANPartoutV90);
+
+setTimeout(afficherEANPartoutV90, 500);
