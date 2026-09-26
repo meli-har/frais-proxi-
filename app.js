@@ -336,9 +336,32 @@ function render(){
   if($('homeRecent')){const recent=[...activeProducts].slice(-4).reverse();$('homeRecent').innerHTML=recent.length?recent.map(p=>`<button data-add-date="${p.id}"><span class="recentThumb">${productPhotoHTML(p.barcode,p.name)}</span><span><b>Produit suivi</b><small>${p.barcode?esc(p.barcode)+' · ':''}${esc(p.name)}</small></span><em>${fmt(p.expiry)}</em></button>`).join(''):'<div class="homeEmpty">Aucun produit suivi pour le moment.</div>'; }
   let q=($('search')?.value||'').toLowerCase();let ps=products.filter(p=>p.name.toLowerCase().includes(q)||(p.barcode||'').includes(q));if(filter!=='all')ps=ps.filter(p=>arr(filter).some(x=>x.id===p.id));if($('productList')){const gs=groupedProducts(ps);$('productList').innerHTML=gs.length?gs.map(productGroupHTML).join(''):'<div class="card">Aucun produit.</div>';}
   renderStats();if($('settingsStore'))$('settingsStore').textContent='Proxi - Monéteau';if($('storeName'))$('storeName').textContent='Proxi - Monéteau';
+}dailyView')}
+function openDaily(m){
+  dailyMode=m;
+  let a=arr(m);
+  let d=m==='today'?today():add(today(),1);
+
+  $('dailyTitle').textContent=m==='today'
+    ? (today().getDay()===6 ? "À retirer ce week-end" : "À retirer aujourd'hui")
+    : "À surveiller demain";
+
+  $('dailyCount').textContent=qty(a)+' produits';
+
+  $('dailyDate').textContent='▣ '+new Intl.DateTimeFormat('fr-FR',{
+    weekday:'long',
+    day:'numeric',
+    month:'long',
+    year:'numeric'
+  }).format(d);
+
+  $('dailyList').innerHTML=a.length
+    ? a.map(p=>productHTML(p,true)).join('')
+    : '<div class="card">Aucun produit 🎉</div>';
+
+  show('dailyView');
 }
-function openDaily(m){dailyMode=m;let a=arr(m),d=m==='today'?today():add(today(),1);$('dailyTitle').textContent=m==='today'?(today().getDay()===6?"À retirer ce week-end":"À retirer aujourd'hui"):'À surveiller demain'$(';$('dailyCount').textContent=qty(a)+' produits';dailyDate').textContent='▣ '+new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(d);$('dailyList').innerHTML=a.length?a.map(p=>productHTML(p,true)).join(''):'<div class="card">Aucun produit 🎉</div>';show('dailyView')}
-function renderStats(){
+  function renderStats(){
   if(!$('removedStat'))return;let week=arr('week'),removed=products.filter(p=>p.done);$('removedStat').textContent=qty(removed);$('pendingStat').textContent=qty(week);$('lossStat').textContent='-'+(qty(removed)*0.5).toFixed(2).replace('.',',')+'€';$('weekText').textContent='Semaine du '+fmt(today())+' au '+fmt(add(today(),6));
   let groups={};products.forEach(p=>groups[p.department]=(groups[p.department]||0)+(+p.quantity||1));let max=Math.max(1,...Object.values(groups));$('departmentStats').innerHTML=Object.entries(groups).map(([k,v])=>`<div class="barRow"><div class="barTop"><span>${k}</span><b>${v}</b></div><div class="bar"><i style="width:${v/max*100}%"></i></div></div>`).join('')||'<small>Aucune donnée.</small>';
   $('history').innerHTML=removed.slice(-5).reverse().map(p=>`<div class="hist"><span>🔴 ${p.doneAt?fmt(p.doneAt):'Retiré'}</span><b>${p.quantity} produit(s)</b></div>`).join('')||'<small>Aucun retrait.</small>';
