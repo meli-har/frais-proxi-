@@ -823,3 +823,82 @@ body{
   font-weight: 800;
   text-shadow: 0 2px 5px rgba(0,0,0,.45);
 }
+/* ===== RETRO / CASSE COMPACT ===== */
+
+.retroCharte{
+  padding:16px !important;
+}
+
+.retroCharteTitle{
+  font-size:18px;
+  font-weight:800;
+  margin-bottom:12px;
+}
+
+.retroCharteRow{
+  padding:8px 0;
+  border-bottom:1px solid #e7edf2;
+}
+
+.retroCharteRow:last-child{
+  border-bottom:none;
+}
+
+.retroCharteRow b{
+  display:block;
+  font-size:14px;
+  margin-bottom:2px;
+}
+
+.retroCharteRow span{
+  font-size:13px;
+  color:#607080;
+}
+
+.retroDates{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+  margin-top:12px;
+}
+
+.retroDateBox,
+.casseDateBox{
+  border-radius:14px;
+  padding:12px;
+}
+
+.retroDateBox{
+  background:#fff3df;
+}
+
+.casseDateBox{
+  background:#ffe8e8;
+}
+
+.retroDateLabel{
+  font-size:12px;
+  font-weight:800;
+  display:block;
+  margin-bottom:4px;
+}
+
+.retroDateBox .retroDateLabel{
+  color:#d87500;
+}
+
+.casseDateBox .retroDateLabel{
+  color:#d92525;
+}
+
+.retroDateValue{
+  font-size:17px;
+  font-weight:800;
+  color:#10283a;
+}
+
+.retroPrepare{
+  font-size:12px;
+  margin-top:10px;
+  color:#607080;
+}
