@@ -19,7 +19,23 @@ function setSync(text,ok=false){let x=$('syncState');if(x){x.textContent=text;x.
 function icon(dep){return({'Crèmerie':'🥛','Charcuterie':'🥓','Frais':'🥬','Traiteur':'🍗','Épicerie':'🧀','Boucherie':'🥩','Poissonnerie':'🐟'})[dep]||'🥫'}
 function status(p){if(p.done)return['Retiré','green'];let diff=Math.round((new Date(p.expiry+'T00:00:00')-today())/86400000);if(diff<=0)return["À retirer aujourd'hui",'red'];if(diff===1)return['Demain','orange'];return['Cette semaine','green']}
 function inWeek(p){let d=new Date(p.expiry+'T00:00:00'),t=today(),e=add(t,6);return d>=t&&d<=e}
-function arr(mode){let t=iso(today()),tm=iso(add(today(),1));return products.filter(p=>!p.done&&(mode==='today'?p.expiry<=t:mode==='tomorrow'?p.expiry===tm:mode==='week'?inWeek(p):true))}
+function arr(mode){
+  let t=iso(today()), tm=iso(add(today(),1));
+  let samedi=today().getDay()===6;
+  let dimanche=iso(add(today(),1));
+
+  return products.filter(p =>
+    !p.done && (
+      mode==='today'
+        ? (samedi ? p.expiry<=dimanche : p.expiry<=t)
+        : mode==='tomorrow'
+          ? p.expiry===tm
+          : mode==='week'
+            ? inWeek(p)
+            : true
+    )
+  );
+}
 function qty(a){return a.reduce((n,p)=>n+(+p.quantity||1),0)}
 
 function catalogueMeta(code){return catalogue.find(x=>String(x.code_barres||'')===String(code||''))||null}
