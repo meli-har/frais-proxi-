@@ -1107,29 +1107,40 @@ function joursAvantDlc(dateIso){
 
 function charteRetroHTML(){
   return `
-    <div class="card" style="margin-bottom:16px">
-      <b>📋 CHARTE RÉTRO / CASSE</b>
+    <div class="card retroCharte">
+      <div class="retroCharteTitle">📋 CHARTE RÉTRO / CASSE</div>
 
-      <p><b>Crèmerie</b><br>
-      Rétro J-6 • Casse J-5</p>
+      <div class="retroCharteRow">
+        <b>Crèmerie</b>
+        <span>Rétro J-6 • Casse J-5</span>
+      </div>
 
-      <p><b>Pain de mie / Charcuterie / Brioche</b><br>
-      Rétro J-5 • Casse J-4</p>
+      <div class="retroCharteRow">
+        <b>Pain de mie / Charcuterie / Brioche</b>
+        <span>Rétro J-5 • Casse J-4</span>
+      </div>
 
-      <p><b>Snack / Salade</b><br>
-      Rétro J-2 • Casse J-1</p>
+      <div class="retroCharteRow">
+        <b>Snack / Salade</b>
+        <span>Rétro J-2 • Casse J-1</span>
+      </div>
 
-      <p><b>Salade sachet</b><br>
-      Rétro J-2 • Casse J-1</p>
+      <div class="retroCharteRow">
+        <b>Salade sachet</b>
+        <span>Rétro J-2 • Casse J-1</span>
+      </div>
 
-      <p><b>Boucherie / Volaille / Saurisserie</b><br>
-      Rétro J-2 • Casse J-1</p>
+      <div class="retroCharteRow">
+        <b>Boucherie / Volaille / Saurisserie</b>
+        <span>Rétro J-2 • Casse J-1</span>
+      </div>
 
-      <small>💡 Les produits apparaissent 1 jour avant pour préparer le travail.</small>
+      <div class="retroPrepare">
+        💡 Affichage 1 jour avant pour préparer le travail.
+      </div>
     </div>
   `;
 }
-
 function renderRetroCasse(){
   const retroList = $('retroList');
   const casseList = $('casseList');
