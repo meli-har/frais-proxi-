@@ -336,7 +336,7 @@ function render(){
   if($('homeRecent')){const recent=[...activeProducts].slice(-4).reverse();$('homeRecent').innerHTML=recent.length?recent.map(p=>`<button data-add-date="${p.id}"><span class="recentThumb">${productPhotoHTML(p.barcode,p.name)}</span><span><b>Produit suivi</b><small>${p.barcode?esc(p.barcode)+' · ':''}${esc(p.name)}</small></span><em>${fmt(p.expiry)}</em></button>`).join(''):'<div class="homeEmpty">Aucun produit suivi pour le moment.</div>'; }
   let q=($('search')?.value||'').toLowerCase();let ps=products.filter(p=>p.name.toLowerCase().includes(q)||(p.barcode||'').includes(q));if(filter!=='all')ps=ps.filter(p=>arr(filter).some(x=>x.id===p.id));if($('productList')){const gs=groupedProducts(ps);$('productList').innerHTML=gs.length?gs.map(productGroupHTML).join(''):'<div class="card">Aucun produit.</div>';}
   renderStats();if($('settingsStore'))$('settingsStore').textContent='Proxi - Monéteau';if($('storeName'))$('storeName').textContent='Proxi - Monéteau';
-}dailyView')}
+}
 function openDaily(m){
   dailyMode=m;
   let a=arr(m);
