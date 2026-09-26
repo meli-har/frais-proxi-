@@ -320,7 +320,50 @@ function show(id){
   if(id==='activityView')loadActivity();
   if(id==='departmentsView')loadDepartmentsRemote().then(renderDepartments);if(id==='notificationsView')loadNotifications();if(id==='catalogueView')loadCatalogue();applyRoleUI();render();
 }
-function productHTML(p,check=false){let[s,c]=status(p);return `<div class="product"><div class="picon productThumb">${productPhotoHTML(p.barcode,p.name)}</div><div class="pinfo"><b>${esc(p.name)}</b><span class="badge ${c}">${s}</span><small>${fmt(p.expiry)} · ${esc(p.department)}</small><div class="productActions"><button data-add-date="${p.id}">＋ DLC</button><button data-delete-product="${p.id}">Supprimer</button></div></div><span class="qtyText">${p.quantity>1?'x'+p.quantity:''}</span>${check?`<button class="check ${p.done?'done':''}" data-done="${p.id}">${p.done?'✓':''}</button>`:''}</div>`}
+function productHTML(p,check=false){
+  let [s,c]=status(p);
+
+  return `
+    <div class="product">
+
+      <div class="picon productThumb">
+        ${productPhotoHTML(p.barcode,p.name)}
+      </div>
+
+      <div class="pinfo">
+
+        <b>${esc(p.name)}</b>
+
+        ${p.barcode
+          ? `<small style="display:block;margin-top:3px;color:#6b7c89">
+               EAN : ${esc(p.barcode)}
+             </small>`
+          : ''
+        }
+
+        <span class="badge ${c}">${s}</span>
+
+        <small>
+          ${fmt(p.expiry)} · ${esc(p.department)}
+        </small>
+
+        <div class="productActions">
+          <button data-add-date="${p.id}">＋ DLC</button>
+          <button data-delete-product="${p.id}">Supprimer</button>
+        </div>
+
+      </div>
+
+      ${check
+        ? `<button class="check ${p.done?'done':''}" data-done="${p.id}">
+             ${p.done?'✓':''}
+           </button>`
+        : ''
+      }
+
+    </div>
+  `;
+}
 function render(){
   let t=today();if($('currentDate'))$('currentDate').textContent=new Intl.DateTimeFormat('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(t);
   if($('todayCount'))$('todayCount').textContent=qty(arr('today'));if($('tomorrowCount'))$('tomorrowCount').textContent=qty(arr('tomorrow'));if($('weekCount'))$('weekCount').textContent=qty(arr('week'));
