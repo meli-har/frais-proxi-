@@ -398,12 +398,103 @@ function openDaily(m){
     year:'numeric'
   }).format(d);
 
-  $('dailyList').innerHTML=a.length
-    ? a.map(p=>productHTML(p,true)).join('')
-    : '<div class="card">Aucun produit 🎉</div>';
+const dailyFaits = JSON.parse(
+  localStorage.getItem('fpDailyFaits') || '{}'
+);
+
+$('dailyList').innerHTML = a.length
+  ? a.map(p => {
+      const cle = `${p.id || ''}_${p.barcode || ''}_${p.expiry || ''}`;
+      const fait = !!dailyFaits[cle];
+
+      return `
+        <div class="product" style="${fait ? 'opacity:.55;' : ''}">
+
+          <div class="picon productThumb">
+            ${productPhotoHTML(p.barcode,p.name)}
+          </div>
+
+          <div class="pinfo">
+
+            <b style="${fait ? 'text-decoration:line-through;' : ''}">
+              ${esc(p.name || 'Produit')}
+            </b>
+
+            ${p.barcode ? `
+              <small style="display:block;margin-top:3px;color:#6b7c89">
+                EAN : ${esc(p.barcode)}
+              </small>
+            ` : ''}
+
+            <small style="display:block;margin-top:5px">
+              DLC : <b>${fmt(p.expiry)}</b> · ${esc(p.department || '')}
+            </small>
+
+            ${fait ? `
+              <small style="
+                display:block;
+                margin-top:5px;
+                font-weight:800;
+                color:#168447;
+              ">
+                ✓ FAIT
+              </small>
+            ` : ''}
+
+          </div>
+
+          <button
+            type="button"
+            data-daily-check="${esc(cle)}"
+            style="
+              width:38px;
+              height:38px;
+              min-width:38px;
+              border-radius:10px;
+              border:2px solid ${fait ? '#168447' : '#aab4bc'};
+              background:${fait ? '#168447' : '#fff'};
+              color:#fff;
+              font-size:22px;
+              font-weight:900;
+              padding:0;
+            "
+          >${fait ? '✓' : ''}</button>
+
+        </div>
+      `;
+    }).join('')
+  : '<div class="card">Aucun produit 🎉</div>';
 
   show('dailyView');
 }
+/* ===== CASES FAIT - À RETIRER AUJOURD'HUI ===== */
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-daily-check]');
+  if(!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const cle = btn.dataset.dailyCheck;
+
+  const dailyFaits = JSON.parse(
+    localStorage.getItem('fpDailyFaits') || '{}'
+  );
+
+  if(dailyFaits[cle]){
+    delete dailyFaits[cle];
+  } else {
+    dailyFaits[cle] = true;
+  }
+
+  localStorage.setItem(
+    'fpDailyFaits',
+    JSON.stringify(dailyFaits)
+  );
+
+  openDaily(dailyMode);
+});
   function renderStats(){
   if(!$('removedStat'))return;let week=arr('week'),removed=products.filter(p=>p.done);$('removedStat').textContent=qty(removed);$('pendingStat').textContent=qty(week);$('lossStat').textContent='-'+(qty(removed)*0.5).toFixed(2).replace('.',',')+'€';$('weekText').textContent='Semaine du '+fmt(today())+' au '+fmt(add(today(),6));
   let groups={};products.forEach(p=>groups[p.department]=(groups[p.department]||0)+(+p.quantity||1));let max=Math.max(1,...Object.values(groups));$('departmentStats').innerHTML=Object.entries(groups).map(([k,v])=>`<div class="barRow"><div class="barTop"><span>${k}</span><b>${v}</b></div><div class="bar"><i style="width:${v/max*100}%"></i></div></div>`).join('')||'<small>Aucune donnée.</small>';
