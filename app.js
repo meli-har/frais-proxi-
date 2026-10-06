@@ -1190,18 +1190,32 @@ function renderRetroCasse(){
 
   if(!retroList || !casseList) return;
 
+  // Lundi et dimanche de la semaine en cours
+  const maintenant = new Date();
+  maintenant.setHours(0,0,0,0);
+
+  const lundi = new Date(maintenant);
+  const jour = lundi.getDay();
+  lundi.setDate(lundi.getDate() - (jour === 0 ? 6 : jour - 1));
+
+  const dimanche = new Date(lundi);
+  dimanche.setDate(lundi.getDate() + 6);
+
+  // La rétro est préparée 1 jour avant la date rétro
+  const debutAffichage = new Date(lundi);
+  debutAffichage.setDate(debutAffichage.getDate() + 1);
+
+  const finAffichage = new Date(dimanche);
+  finAffichage.setDate(finAffichage.getDate() + 1);
+
   const retro = [];
   const casse = [];
 
   products
     .filter(p => !p.done && p.expiry)
     .forEach(p => {
-
       const regle = regleProduitRetroCasse(p);
       if(!regle) return;
-
-      const jours = joursAvantDlc(p.expiry);
-      if(jours === null) return;
 
       const dateRetro = dateMoinsJours(p.expiry, regle.retro);
       const dateCasse = dateMoinsJours(p.expiry, regle.casse);
@@ -1209,63 +1223,166 @@ function renderRetroCasse(){
       const produit = {
         ...p,
         regle,
-        jours,
         dateRetro,
         dateCasse
       };
 
-      // Visible la veille de la rétro
-      if(jours === regle.retro + 1 || jours === regle.retro){
+      // Affichage de toute la rétro de la semaine
+      // 1 jour avant pour préparer le travail
+      if(dateRetro >= debutAffichage && dateRetro <= finAffichage){
         retro.push(produit);
       }
 
-      // Visible la veille du passage en casse et ensuite
-      if(jours <= regle.casse + 1){
-        casse.push(produit);
+      // On conserve le fonctionnement de la casse
+      const jours = joursAvantDlc(p.expiry);
+
+      if(jours !== null && jours <= regle.casse + 1){
+        casse.push({
+          ...produit,
+          jours
+        });
       }
     });
 
-  retro.sort((a,b) =>
-    String(a.expiry).localeCompare(String(b.expiry))
-  );
-
+  retro.sort((a,b) => a.dateRetro - b.dateRetro);
   casse.sort((a,b) =>
     String(a.expiry).localeCompare(String(b.expiry))
   );
 
-  retroList.innerHTML =
-    charteRetroHTML() +
-    (retro.length
-      ? retro.map(p => `
-          <div class="card">
-            <b>${esc(p.name || 'Produit')}</b>
+  // État des cases RÉTRO uniquement.
+  // Cela ne modifie ni ne supprime les DLC.
+  const retroFaits = JSON.parse(
+    localStorage.getItem('fpRetroFaits') || '{}'
+  );
 
-            <p>
-              DLC : <b>${fmt(p.expiry)}</b>
-            </p>
+  const cleRetro = p =>
+    `${p.id || ''}_${p.barcode || ''}_${p.expiry || ''}_${dateCourte(p.dateRetro)}`;
 
-          <div class="retroDates">
+  const joursSemaine = [];
 
-  <div class="retroDateBox">
-    <span class="retroDateLabel">🟠 RÉTRO</span>
-    <span class="retroDateValue">
-      ${dateCourte(p.dateRetro)}
-    </span>
-  </div>
+  for(let i = 0; i < 7; i++){
+    const d = new Date(lundi);
+    d.setDate(lundi.getDate() + i);
 
-  <div class="casseDateBox">
-    <span class="retroDateLabel">🔴 CASSE</span>
-    <span class="retroDateValue">
-      ${dateCourte(p.dateCasse)}
-    </span>
-  </div>
-
-</div>  
-          </div>
-        `).join('')
-      : '<div class="card">Aucun produit à préparer en rétro.</div>'
+    const produitsJour = retro.filter(p =>
+      p.dateRetro.getFullYear() === d.getFullYear() &&
+      p.dateRetro.getMonth() === d.getMonth() &&
+      p.dateRetro.getDate() === d.getDate()
     );
 
+    if(produitsJour.length){
+      joursSemaine.push(`
+        <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">
+
+          <div style="
+            padding:12px 14px;
+            font-weight:800;
+            font-size:16px;
+            background:#f4f6f8;
+          ">
+            ${new Intl.DateTimeFormat('fr-FR',{
+              weekday:'long',
+              day:'numeric',
+              month:'long'
+            }).format(d).toUpperCase()}
+            — ${produitsJour.length} produit${produitsJour.length > 1 ? 's' : ''}
+          </div>
+
+          ${produitsJour.map(p => {
+            const cle = cleRetro(p);
+            const fait = !!retroFaits[cle];
+
+            return `
+              <div
+                data-retro-row="${esc(cle)}"
+                style="
+                  display:flex;
+                  align-items:center;
+                  gap:12px;
+                  padding:14px;
+                  border-top:1px solid #e6e9ec;
+                  ${fait ? 'opacity:.55;' : ''}
+                "
+              >
+
+                <button
+                  type="button"
+                  data-retro-check="${esc(cle)}"
+                  style="
+                    width:38px;
+                    height:38px;
+                    min-width:38px;
+                    border-radius:10px;
+                    border:2px solid ${fait ? '#168447' : '#aab4bc'};
+                    background:${fait ? '#168447' : '#fff'};
+                    font-size:22px;
+                    font-weight:900;
+                    color:#fff;
+                    padding:0;
+                  "
+                >${fait ? '✓' : ''}</button>
+
+                <div style="flex:1;min-width:0">
+
+                  <b style="
+                    display:block;
+                    font-size:15px;
+                    ${fait ? 'text-decoration:line-through;' : ''}
+                  ">
+                    ${esc(p.name || 'Produit')}
+                  </b>
+
+                  ${p.barcode ? `
+                    <small style="
+                      display:block;
+                      margin-top:4px;
+                      color:#6b7c89;
+                    ">
+                      EAN : ${esc(p.barcode)}
+                    </small>
+                  ` : ''}
+
+                  <div style="margin-top:5px">
+                    DLC : <b>${fmt(p.expiry)}</b>
+                  </div>
+
+                  ${fait ? `
+                    <small style="
+                      display:block;
+                      margin-top:5px;
+                      font-weight:800;
+                      color:#168447;
+                    ">
+                      ✓ FAIT
+                    </small>
+                  ` : ''}
+
+                </div>
+              </div>
+            `;
+          }).join('')}
+
+        </div>
+      `);
+    }
+  }
+
+  retroList.innerHTML = `
+    <div style="margin-bottom:14px">
+      <b style="font-size:20px">📅 RÉTRO DE LA SEMAINE</b>
+      <div style="margin-top:4px;color:#6b7c89">
+        Cochez simplement les produits une fois la rétro effectuée.
+      </div>
+    </div>
+
+    ${
+      joursSemaine.length
+        ? joursSemaine.join('')
+        : '<div class="card">Aucune rétro prévue cette semaine 🎉</div>'
+    }
+  `;
+
+  // On garde la page CASSE actuelle
   casseList.innerHTML =
     charteRetroHTML() +
     (casse.length
@@ -1273,33 +1390,70 @@ function renderRetroCasse(){
           <div class="card">
             <b>${esc(p.name || 'Produit')}</b>
 
+            ${p.barcode ? `
+              <small style="
+                display:block;
+                margin-top:4px;
+                color:#6b7c89;
+              ">
+                EAN : ${esc(p.barcode)}
+              </small>
+            ` : ''}
+
             <p>
               DLC : <b>${fmt(p.expiry)}</b>
             </p>
 
-   <div class="retroDates">
+            <div class="retroDates">
 
-  <div class="retroDateBox">
-    <span class="retroDateLabel">🟠 RÉTRO</span>
-    <span class="retroDateValue">
-      ${dateCourte(p.dateRetro)}
-    </span>
-  </div>
+              <div class="retroDateBox">
+                <span class="retroDateLabel">🟠 RÉTRO</span>
+                <span class="retroDateValue">
+                  ${dateCourte(p.dateRetro)}
+                </span>
+              </div>
 
-  <div class="casseDateBox">
-    <span class="retroDateLabel">🔴 CASSE</span>
-    <span class="retroDateValue">
-      ${dateCourte(p.dateCasse)}
-    </span>
-  </div>
+              <div class="casseDateBox">
+                <span class="retroDateLabel">🔴 CASSE</span>
+                <span class="retroDateValue">
+                  ${dateCourte(p.dateCasse)}
+                </span>
+              </div>
 
-</div>         
+            </div>
           </div>
         `).join('')
       : '<div class="card">Aucun produit à préparer pour la casse.</div>'
     );
 }
+/* ===== CASES RÉTRO FAIT ===== */
 
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-retro-check]');
+  if(!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const cle = btn.dataset.retroCheck;
+
+  const retroFaits = JSON.parse(
+    localStorage.getItem('fpRetroFaits') || '{}'
+  );
+
+  if(retroFaits[cle]){
+    delete retroFaits[cle];
+  } else {
+    retroFaits[cle] = true;
+  }
+
+  localStorage.setItem(
+    'fpRetroFaits',
+    JSON.stringify(retroFaits)
+  );
+
+  renderRetroCasse();
+});
 document.addEventListener('click', e => {
   const btn = e.target.closest(
     '[data-view="retroView"], [data-view="casseView"]'
