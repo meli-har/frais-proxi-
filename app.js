@@ -1367,7 +1367,9 @@ function renderRetroCasse(){
     }
   }
 
-  retroList.innerHTML = `
+retroList.innerHTML =
+  charteRetroHTML() +
+  `
     <div style="margin-bottom:14px">
       <b style="font-size:20px">📅 RÉTRO DE LA SEMAINE</b>
       <div style="margin-top:4px;color:#6b7c89">
@@ -1382,50 +1384,167 @@ function renderRetroCasse(){
     }
   `;
 
-  // On garde la page CASSE actuelle
-  casseList.innerHTML =
-    charteRetroHTML() +
-    (casse.length
-      ? casse.map(p => `
-          <div class="card">
-            <b>${esc(p.name || 'Produit')}</b>
+/* ===== CASSE DE LA SEMAINE ===== */
 
-            ${p.barcode ? `
-              <small style="
-                display:block;
-                margin-top:4px;
-                color:#6b7c89;
-              ">
-                EAN : ${esc(p.barcode)}
-              </small>
-            ` : ''}
+const casseFaits = JSON.parse(
+  localStorage.getItem('fpCasseFaits') || '{}'
+);
 
-            <p>
-              DLC : <b>${fmt(p.expiry)}</b>
-            </p>
+const cleCasse = p =>
+  `${p.id || ''}_${p.barcode || ''}_${p.expiry || ''}_${dateCourte(p.dateCasse)}`;
 
-            <div class="retroDates">
+const joursCasse = [];
 
-              <div class="retroDateBox">
-                <span class="retroDateLabel">🟠 RÉTRO</span>
-                <span class="retroDateValue">
-                  ${dateCourte(p.dateRetro)}
-                </span>
+for(let i = 0; i < 7; i++){
+  const d = new Date(lundi);
+  d.setDate(lundi.getDate() + i);
+
+  const produitsJour = casse.filter(p =>
+    p.dateCasse.getFullYear() === d.getFullYear() &&
+    p.dateCasse.getMonth() === d.getMonth() &&
+    p.dateCasse.getDate() === d.getDate()
+  );
+
+  if(produitsJour.length){
+    joursCasse.push(`
+      <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">
+
+        <div style="
+          padding:12px 14px;
+          font-weight:800;
+          font-size:16px;
+          background:#f4f6f8;
+        ">
+          ${new Intl.DateTimeFormat('fr-FR',{
+            weekday:'long',
+            day:'numeric',
+            month:'long'
+          }).format(d).toUpperCase()}
+          — ${produitsJour.length} produit${produitsJour.length > 1 ? 's' : ''}
+        </div>
+
+        ${produitsJour.map(p => {
+          const cle = cleCasse(p);
+          const fait = !!casseFaits[cle];
+
+          return `
+            <div style="
+              display:flex;
+              align-items:center;
+              gap:12px;
+              padding:14px;
+              border-top:1px solid #e6e9ec;
+              ${fait ? 'opacity:.55;' : ''}
+            ">
+
+              <button
+                type="button"
+                data-casse-check="${esc(cle)}"
+                style="
+                  width:38px;
+                  height:38px;
+                  min-width:38px;
+                  border-radius:10px;
+                  border:2px solid ${fait ? '#168447' : '#aab4bc'};
+                  background:${fait ? '#168447' : '#fff'};
+                  font-size:22px;
+                  font-weight:900;
+                  color:#fff;
+                  padding:0;
+                "
+              >${fait ? '✓' : ''}</button>
+
+              <div style="flex:1;min-width:0">
+
+                <b style="
+                  display:block;
+                  font-size:15px;
+                  ${fait ? 'text-decoration:line-through;' : ''}
+                ">
+                  ${esc(p.name || 'Produit')}
+                </b>
+
+                ${p.barcode ? `
+                  <small style="
+                    display:block;
+                    margin-top:4px;
+                    color:#6b7c89;
+                  ">
+                    EAN : ${esc(p.barcode)}
+                  </small>
+                ` : ''}
+
+                <div style="margin-top:5px">
+                  DLC : <b>${fmt(p.expiry)}</b>
+                </div>
+
+                ${fait ? `
+                  <small style="
+                    display:block;
+                    margin-top:5px;
+                    font-weight:800;
+                    color:#168447;
+                  ">
+                    ✓ FAIT
+                  </small>
+                ` : ''}
+
               </div>
-
-              <div class="casseDateBox">
-                <span class="retroDateLabel">🔴 CASSE</span>
-                <span class="retroDateValue">
-                  ${dateCourte(p.dateCasse)}
-                </span>
-              </div>
-
             </div>
-          </div>
-        `).join('')
-      : '<div class="card">Aucun produit à préparer pour la casse.</div>'
-    );
+          `;
+        }).join('')}
+
+      </div>
+    `);
+  }
 }
+
+casseList.innerHTML =
+  charteRetroHTML() +
+  `
+    <div style="margin:16px 0 14px">
+      <b style="font-size:20px">📅 CASSE DE LA SEMAINE</b>
+
+      <div style="margin-top:4px;color:#6b7c89">
+        Cochez simplement les produits une fois la casse effectuée.
+      </div>
+    </div>
+
+    ${
+      joursCasse.length
+        ? joursCasse.join('')
+        : '<div class="card">Aucune casse prévue cette semaine 🎉</div>'
+    }
+  `;
+}
+/* ===== CASES CASSE FAIT ===== */
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-casse-check]');
+  if(!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const cle = btn.dataset.casseCheck;
+
+  const casseFaits = JSON.parse(
+    localStorage.getItem('fpCasseFaits') || '{}'
+  );
+
+  if(casseFaits[cle]){
+    delete casseFaits[cle];
+  } else {
+    casseFaits[cle] = true;
+  }
+
+  localStorage.setItem(
+    'fpCasseFaits',
+    JSON.stringify(casseFaits)
+  );
+
+  renderRetroCasse();
+});
 /* ===== CASES RÉTRO FAIT ===== */
 
 document.addEventListener('click', e => {
