@@ -1347,114 +1347,7 @@ products
   const cleRetro = p =>
     `${p.id || ''}_${p.barcode || ''}_${p.expiry || ''}_${dateCourte(p.dateRetro)}`;
 
-  
 
-  for(let i = 0; i < 7; i++){
-    const d = new Date(lundi);
-    d.setDate(lundi.getDate() + i);
-
-    const produitsJour = retro.filter(p =>
-      p.dateRetro.getFullYear() === d.getFullYear() &&
-      p.dateRetro.getMonth() === d.getMonth() &&
-      p.dateRetro.getDate() === d.getDate()
-    );
-
-    if(produitsJour.length){
-      joursSemaine.push(`
-        <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">
-
-          <div style="
-            padding:12px 14px;
-            font-weight:800;
-            font-size:16px;
-            background:#f4f6f8;
-          ">
-            ${new Intl.DateTimeFormat('fr-FR',{
-              weekday:'long',
-              day:'numeric',
-              month:'long'
-            }).format(d).toUpperCase()}
-            — ${produitsJour.length} produit${produitsJour.length > 1 ? 's' : ''}
-          </div>
-
-          ${produitsJour.map(p => {
-            const cle = cleRetro(p);
-            const fait = !!retroFaits[cle];
-
-            return `
-              <div
-                data-retro-row="${esc(cle)}"
-                style="
-                  display:flex;
-                  align-items:center;
-                  gap:12px;
-                  padding:14px;
-                  border-top:1px solid #e6e9ec;
-                  ${fait ? 'opacity:.55;' : ''}
-                "
-              >
-
-                <button
-                  type="button"
-                  data-retro-check="${esc(cle)}"
-                  style="
-                    width:38px;
-                    height:38px;
-                    min-width:38px;
-                    border-radius:10px;
-                    border:2px solid ${fait ? '#168447' : '#aab4bc'};
-                    background:${fait ? '#168447' : '#fff'};
-                    font-size:22px;
-                    font-weight:900;
-                    color:#fff;
-                    padding:0;
-                  "
-                >${fait ? '✓' : ''}</button>
-
-                <div style="flex:1;min-width:0">
-
-                  <b style="
-                    display:block;
-                    font-size:15px;
-                    ${fait ? 'text-decoration:line-through;' : ''}
-                  ">
-                    ${esc(p.name || 'Produit')}
-                  </b>
-
-                  ${p.barcode ? `
-                    <small style="
-                      display:block;
-                      margin-top:4px;
-                      color:#6b7c89;
-                    ">
-                      EAN : ${esc(p.barcode)}
-                    </small>
-                  ` : ''}
-
-                  <div style="margin-top:5px">
-                    DLC : <b>${fmt(p.expiry)}</b>
-                  </div>
-
-                  ${fait ? `
-                    <small style="
-                      display:block;
-                      margin-top:5px;
-                      font-weight:800;
-                      color:#168447;
-                    ">
-                      ✓ FAIT
-                    </small>
-                  ` : ''}
-
-                </div>
-              </div>
-            `;
-          }).join('')}
-
-        </div>
-      `);
-    }
-  }
 const joursSemaine = [];
 
 retro.forEach(p => {
@@ -1548,7 +1441,12 @@ retroList.innerHTML =
         : '<div class="card">Aucune rétro prévue 🎉</div>'
     }
   `;
-  
+  const casseFaits = JSON.parse(
+  localStorage.getItem('fpCasseFaits') || '{}'
+);
+
+const cleCasse = p =>
+  `${p.id || ''}_${p.barcode || ''}_${p.expiry || ''}_${dateCourte(p.dateCasse)}`;
   const joursCasse = [];
 
 casse.forEach(p => {
