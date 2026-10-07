@@ -1308,21 +1308,30 @@ function renderRetroCasse(){
   const retro = [];
   const casse = [];
 
-  products
-    .filter(p => !p.done && p.expiry)
-    .forEach(p => {
-      const regle = regleProduitRetroCasse(p);
-      if(!regle) return;
+products
+  .filter(p => !p.done && p.expiry)
+  .forEach(p => {
+    const regle = regleProduitRetroCasse(p);
+    if(!regle) return;
 
-      const dateRetro = dateMoinsJours(p.expiry, regle.retro);
-      const dateCasse = dateMoinsJours(p.expiry, regle.casse);
+    const dateDebutRetro = dateMoinsJours(p.expiry, regle.retro);
+    const dateFinRetro = dateMoinsJours(p.expiry, regle.casse);
+    const dateCasse = dateFinRetro;
 
-      const produit = {
-        ...p,
-        regle,
-        dateRetro,
-        dateCasse
-      };
+    const produit = {
+      ...p,
+      regle,
+      dateRetro: dateDebutRetro,
+      dateDebutRetro,
+      dateFinRetro,
+      dateCasse
+    };
+
+    // Tous les produits sont maintenant conservés
+    // pour pouvoir afficher leur période complète.
+    retro.push(produit);
+    casse.push(produit);
+  });
 
       // Affichage de toute la rétro de la semaine
       // 1 jour avant pour préparer le travail
@@ -1463,12 +1472,86 @@ function renderRetroCasse(){
       `);
     }
   }
+const joursSemaine = [];
 
+retro.forEach(p => {
+  const cle = cleRetro(p);
+  const fait = !!retroFaits[cle];
+
+  joursSemaine.push(`
+    <div class="card" style="
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:14px;
+      margin-bottom:12px;
+      ${fait ? 'opacity:.55;' : ''}
+    ">
+
+      <button
+        type="button"
+        data-retro-check="${esc(cle)}"
+        style="
+          width:38px;
+          height:38px;
+          min-width:38px;
+          border-radius:10px;
+          border:2px solid ${fait ? '#168447' : '#aab4bc'};
+          background:${fait ? '#168447' : '#fff'};
+          font-size:22px;
+          font-weight:900;
+          color:#fff;
+          padding:0;
+        "
+      >${fait ? '✓' : ''}</button>
+
+      <div style="flex:1;min-width:0">
+
+        <b style="
+          display:block;
+          font-size:15px;
+          ${fait ? 'text-decoration:line-through;' : ''}
+        ">
+          ${esc(p.name || 'Produit')}
+        </b>
+
+        ${p.barcode ? `
+          <small style="display:block;margin-top:4px;color:#6b7c89">
+            EAN : ${esc(p.barcode)}
+          </small>
+        ` : ''}
+
+        <div style="margin-top:6px">
+          DLC : <b>${fmt(p.expiry)}</b>
+        </div>
+
+        <div style="margin-top:6px;font-weight:700">
+          🔵 Rétro : du
+          ${dateCourte(p.dateDebutRetro)}
+          au
+          ${dateCourte(p.dateFinRetro)}
+        </div>
+
+        ${fait ? `
+          <small style="
+            display:block;
+            margin-top:5px;
+            font-weight:800;
+            color:#168447;
+          ">
+            ✓ FAIT
+          </small>
+        ` : ''}
+
+      </div>
+    </div>
+  `);
+});
 retroList.innerHTML =
   charteRetroHTML() +
   `
     <div style="margin-bottom:14px">
-      <b style="font-size:20px">📅 RÉTRO DE LA SEMAINE</b>
+      <b style="font-size:20px">📅 RÉTRO - TOUS LES PRODUITS</b>
       <div style="margin-top:4px;color:#6b7c89">
         Cochez simplement les produits une fois la rétro effectuée.
       </div>
@@ -1477,130 +1560,89 @@ retroList.innerHTML =
     ${
       joursSemaine.length
         ? joursSemaine.join('')
-        : '<div class="card">Aucune rétro prévue cette semaine 🎉</div>'
+        
+        
+        : '<div class="card">Aucune rétro prévue 🎉</div>'
     }
   `;
+  
+  const joursCasse = [];
 
-/* ===== CASSE DE LA SEMAINE ===== */
+casse.forEach(p => {
+  const cle = cleCasse(p);
+  const fait = !!casseFaits[cle];
 
-const casseFaits = JSON.parse(
-  localStorage.getItem('fpCasseFaits') || '{}'
-);
+  joursCasse.push(`
+    <div class="card" style="
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:14px;
+      margin-bottom:12px;
+      ${fait ? 'opacity:.55;' : ''}
+    ">
 
-const cleCasse = p =>
-  `${p.id || ''}_${p.barcode || ''}_${p.expiry || ''}_${dateCourte(p.dateCasse)}`;
+      <button
+        type="button"
+        data-casse-check="${esc(cle)}"
+        style="
+          width:38px;
+          height:38px;
+          min-width:38px;
+          border-radius:10px;
+          border:2px solid ${fait ? '#168447' : '#aab4bc'};
+          background:${fait ? '#168447' : '#fff'};
+          font-size:22px;
+          font-weight:900;
+          color:#fff;
+          padding:0;
+        "
+      >${fait ? '✓' : ''}</button>
 
-const joursCasse = [];
+      <div style="flex:1;min-width:0">
 
-for(let i = 0; i < 7; i++){
-  const d = new Date(lundi);
-  d.setDate(lundi.getDate() + i);
-
-  const produitsJour = casse.filter(p =>
-    p.dateCasse.getFullYear() === d.getFullYear() &&
-    p.dateCasse.getMonth() === d.getMonth() &&
-    p.dateCasse.getDate() === d.getDate()
-  );
-
-  if(produitsJour.length){
-    joursCasse.push(`
-      <div class="card" style="padding:0;overflow:hidden;margin-bottom:14px">
-
-        <div style="
-          padding:12px 14px;
-          font-weight:800;
-          font-size:16px;
-          background:#f4f6f8;
+        <b style="
+          display:block;
+          font-size:15px;
+          ${fait ? 'text-decoration:line-through;' : ''}
         ">
-          ${new Intl.DateTimeFormat('fr-FR',{
-            weekday:'long',
-            day:'numeric',
-            month:'long'
-          }).format(d).toUpperCase()}
-          — ${produitsJour.length} produit${produitsJour.length > 1 ? 's' : ''}
+          ${esc(p.name || 'Produit')}
+        </b>
+
+        ${p.barcode ? `
+          <small style="display:block;margin-top:4px;color:#6b7c89">
+            EAN : ${esc(p.barcode)}
+          </small>
+        ` : ''}
+
+        <div style="margin-top:6px">
+          DLC : <b>${fmt(p.expiry)}</b>
         </div>
 
-        ${produitsJour.map(p => {
-          const cle = cleCasse(p);
-          const fait = !!casseFaits[cle];
+        <div style="margin-top:6px;font-weight:700">
+          🔴 Casse : à partir du ${dateCourte(p.dateCasse)}
+        </div>
 
-          return `
-            <div style="
-              display:flex;
-              align-items:center;
-              gap:12px;
-              padding:14px;
-              border-top:1px solid #e6e9ec;
-              ${fait ? 'opacity:.55;' : ''}
-            ">
-
-              <button
-                type="button"
-                data-casse-check="${esc(cle)}"
-                style="
-                  width:38px;
-                  height:38px;
-                  min-width:38px;
-                  border-radius:10px;
-                  border:2px solid ${fait ? '#168447' : '#aab4bc'};
-                  background:${fait ? '#168447' : '#fff'};
-                  font-size:22px;
-                  font-weight:900;
-                  color:#fff;
-                  padding:0;
-                "
-              >${fait ? '✓' : ''}</button>
-
-              <div style="flex:1;min-width:0">
-
-                <b style="
-                  display:block;
-                  font-size:15px;
-                  ${fait ? 'text-decoration:line-through;' : ''}
-                ">
-                  ${esc(p.name || 'Produit')}
-                </b>
-
-                ${p.barcode ? `
-                  <small style="
-                    display:block;
-                    margin-top:4px;
-                    color:#6b7c89;
-                  ">
-                    EAN : ${esc(p.barcode)}
-                  </small>
-                ` : ''}
-
-                <div style="margin-top:5px">
-                  DLC : <b>${fmt(p.expiry)}</b>
-                </div>
-
-                ${fait ? `
-                  <small style="
-                    display:block;
-                    margin-top:5px;
-                    font-weight:800;
-                    color:#168447;
-                  ">
-                    ✓ FAIT
-                  </small>
-                ` : ''}
-
-              </div>
-            </div>
-          `;
-        }).join('')}
+        ${fait ? `
+          <small style="
+            display:block;
+            margin-top:5px;
+            font-weight:800;
+            color:#168447;
+          ">
+            ✓ FAIT
+          </small>
+        ` : ''}
 
       </div>
-    `);
-  }
-}
-
+    </div>
+  `);
+});
 casseList.innerHTML =
   charteRetroHTML() +
   `
     <div style="margin:16px 0 14px">
-      <b style="font-size:20px">📅 CASSE DE LA SEMAINE</b>
+      <b style="font-size:20px">📅 CASSE - TOUS LES PRODUITS</b>=
 
       <div style="margin-top:4px;color:#6b7c89">
         Cochez simplement les produits une fois la casse effectuée.
