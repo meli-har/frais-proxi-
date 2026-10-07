@@ -1333,24 +1333,7 @@ products
     casse.push(produit);
   });
 
-      // Affichage de toute la rétro de la semaine
-      // 1 jour avant pour préparer le travail
-      if(dateRetro >= debutAffichage && dateRetro <= finAffichage){
-        retro.push(produit);
-      }
-
-      // On conserve le fonctionnement de la casse
-      const jours = joursAvantDlc(p.expiry);
-
-      if(jours !== null && jours <= regle.casse + 1){
-        casse.push({
-          ...produit,
-          jours
-        });
-      }
-    });
-
-  retro.sort((a,b) => a.dateRetro - b.dateRetro);
+      retro.sort((a,b) => a.dateRetro - b.dateRetro);
   casse.sort((a,b) =>
     String(a.expiry).localeCompare(String(b.expiry))
   );
@@ -1364,7 +1347,7 @@ products
   const cleRetro = p =>
     `${p.id || ''}_${p.barcode || ''}_${p.expiry || ''}_${dateCourte(p.dateRetro)}`;
 
-  const joursSemaine = [];
+  
 
   for(let i = 0; i < 7; i++){
     const d = new Date(lundi);
@@ -1642,7 +1625,7 @@ casseList.innerHTML =
   charteRetroHTML() +
   `
     <div style="margin:16px 0 14px">
-      <b style="font-size:20px">📅 CASSE - TOUS LES PRODUITS</b>=
+      <b style="font-size:20px">📅 CASSE - TOUS LES PRODUITS</b>
 
       <div style="margin-top:4px;color:#6b7c89">
         Cochez simplement les produits une fois la casse effectuée.
