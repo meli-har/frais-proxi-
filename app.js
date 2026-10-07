@@ -398,8 +398,10 @@ function openDaily(m){
     year:'numeric'
   }).format(d);
 
+const cleDailyJour = 'fpDailyFaits_' + iso(today());
+
 const dailyFaits = JSON.parse(
-  localStorage.getItem('fpDailyFaits') || '{}'
+  localStorage.getItem(cleDailyJour) || '{}'
 );
 
 $('dailyList').innerHTML = a.length
@@ -488,10 +490,10 @@ document.addEventListener('click', e => {
     dailyFaits[cle] = true;
   }
 
-  localStorage.setItem(
-    'fpDailyFaits',
-    JSON.stringify(dailyFaits)
-  );
+localStorage.setItem(
+  cleDailyJour,
+  JSON.stringify(dailyFaits)
+);
 
   openDaily(dailyMode);
 });
