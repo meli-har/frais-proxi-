@@ -27,7 +27,9 @@ function arr(mode){
   return products.filter(p =>
     !p.done && (
       mode==='today'
-        ? (samedi ? p.expiry<=dimanche : p.expiry<=t)
+        ? (samedi
+    ? (p.expiry===t || p.expiry===dimanche)
+    : p.expiry===t)
         : mode==='tomorrow'
           ? p.expiry===tm
           : mode==='week'
@@ -480,9 +482,11 @@ document.addEventListener('click', e => {
 
   const cle = btn.dataset.dailyCheck;
 
-  const dailyFaits = JSON.parse(
-    localStorage.getItem('fpDailyFaits') || '{}'
-  );
+const cleDailyJour = 'fpDailyFaits_' + iso(today());
+
+const dailyFaits = JSON.parse(
+  localStorage.getItem(cleDailyJour) || '{}'
+);
 
   if(dailyFaits[cle]){
     delete dailyFaits[cle];
