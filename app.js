@@ -2212,6 +2212,7 @@ if (rayonCatalogueActif !== 'Tous') {
 const loadProductsOriginal = loadProducts;
 
 loadProducts = async function(silent = false) {
+  return await loadProductsOriginal(silent);
   if (!db || !magasinId) return;
 
   const { data, error } = await db
