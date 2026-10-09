@@ -93,7 +93,7 @@ function normaliserDLC(valeur){
 
   return texte;
 }
-function mapRow(r){const code=r.code_barres||'',cat=catalogueMeta(code);return {id:r.id,name:(cat?.nom&&looksLikeBarcodeName(r.nom,code))?cat.nom:(r.nom||cat?.nom||code||'Produit'),barcode:code,quantity:r.quantite||1,expiry:normaliserDLC(r.dlc),department:cat?.rayon||r.rayon||'Frais',note:r.notes||cat?.notes||'',done:!!r.retire,doneAt:r.retire_at||null}}
+function mapRow(r){const code=r.code_barres||'',cat=catalogueMeta(code);return {id:r.id,name:(cat?.nom&&looksLikeBarcodeName(r.nom,code))?cat.nom:(r.nom||cat?.nom||code||'Produit'),barcode:code,quantity:r.quantite||1,expi#ry:normaliserDLC(r.dlc),department:cat?.rayon||r.rayon||'Frais',note:r.notes||cat?.notes||'',done:!!r.retire,doneAt:r.retire_at||null}}
 function saveLocal(){localStorage.setItem(KP,JSON.stringify(products))}
 function queue(op){let q=JSON.parse(localStorage.getItem(KQ)||'[]');q.push(op);localStorage.setItem(KQ,JSON.stringify(q))}
 async function flushQueue(){if(!navigator.onLine||!db||!magasinId)return;let q=JSON.parse(localStorage.getItem(KQ)||'[]'),left=[];for(const op of q){try{if(op.type==='insert')await addProductRemote(op.p,true);else if(op.type==='delete'){let {error}=await db.from('produits').delete().eq('id',op.id).eq('magasin_id',magasinId);if(error)throw error}else if(op.type==='update'){let {error}=await db.from('produits').update(op.payload).eq('id',op.id).eq('magasin_id',magasinId);if(error)throw error}}catch(e){left.push(op)}}localStorage.setItem(KQ,JSON.stringify(left));if(!left.length)await loadProducts(true)}
@@ -244,10 +244,37 @@ async function connectStore(code){
   startSyncTimer();
 }
 async function loadProducts(silent=false){
-  if(!db||!magasinId)return;
-  const {data,error}=await db.from('produits').select('*').eq('magasin_id',magasinId).order('dlc',{ascending:true}).order('created_at',{ascending:true});
-  if(error){if(!silent)toast('Mode hors ligne : données du téléphone');console.error(error);render();return}
-  products=(data||[]).map(mapRow);saveLocal();render();
+  if(!db || !magasinId) return;
+
+  let toutesLesDonnees = [];
+  let debut = 0;
+  const taillePage = 1000;
+
+  while(true){
+    const {data,error} = await db
+      .from('produits')
+      .select('*')
+      .eq('magasin_id',magasinId)
+      .order('dlc',{ascending:true})
+      .order('id',{ascending:true})
+      .range(debut,debut+taillePage-1);
+
+    if(error){
+      if(!silent) toast('Mode hors ligne : données du téléphone');
+      console.error(error);
+      render();
+      return;
+    }
+
+    toutesLesDonnees.push(...(data || []));
+
+    if(!data || data.length < taillePage) break;
+    debut += taillePage;
+  }
+
+  products = toutesLesDonnees.map(mapRow);
+  saveLocal();
+  render();
 }
 function startSyncTimer(){if(syncTimer)clearInterval(syncTimer);syncTimer=setInterval(()=>loadProducts(true),8000)}
 async function addProductRemote(p,noReload=false){const {error}=await db.from('produits').insert({magasin_id:+magasinId,nom:p.name,code_barres:p.barcode||null,quantite:p.quantity,dlc:p.expiry,rayon:p.department,notes:p.note||null,retire:false});if(error)throw error;if(!noReload)await loadProducts(true)}
