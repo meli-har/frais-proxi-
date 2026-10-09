@@ -93,7 +93,7 @@ function normaliserDLC(valeur){
 
   return texte;
 }
-function mapRow(r){const code=r.code_barres||'',cat=catalogueMeta(code);return {id:r.id,name:(cat?.nom&&looksLikeBarcodeName(r.nom,code))?cat.nom:(r.nom||cat?.nom||code||'Produit'),barcode:code,quantity:r.quantite||1,expi#ry:normaliserDLC(r.dlc),department:cat?.rayon||r.rayon||'Frais',note:r.notes||cat?.notes||'',done:!!r.retire,doneAt:r.retire_at||null}}
+function mapRow(r){const code=r.code_barres||'',cat=catalogueMeta(code);return {id:r.id,name:(cat?.nom&&looksLikeBarcodeName(r.nom,code))?cat.nom:(r.nom||cat?.nom||code||'Produit'),barcode:code,quantity:r.quantite||1,expiry:normaliserDLC(r.dlc),department:cat?.rayon||r.rayon||'Frais',note:r.notes||cat?.notes||'',done:!!r.retire,doneAt:r.retire_at||null}}
 function saveLocal(){localStorage.setItem(KP,JSON.stringify(products))}
 function queue(op){let q=JSON.parse(localStorage.getItem(KQ)||'[]');q.push(op);localStorage.setItem(KQ,JSON.stringify(q))}
 async function flushQueue(){if(!navigator.onLine||!db||!magasinId)return;let q=JSON.parse(localStorage.getItem(KQ)||'[]'),left=[];for(const op of q){try{if(op.type==='insert')await addProductRemote(op.p,true);else if(op.type==='delete'){let {error}=await db.from('produits').delete().eq('id',op.id).eq('magasin_id',magasinId);if(error)throw error}else if(op.type==='update'){let {error}=await db.from('produits').update(op.payload).eq('id',op.id).eq('magasin_id',magasinId);if(error)throw error}}catch(e){left.push(op)}}localStorage.setItem(KQ,JSON.stringify(left));if(!left.length)await loadProducts(true)}
