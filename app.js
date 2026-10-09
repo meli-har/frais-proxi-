@@ -62,7 +62,38 @@ function qty(a){return a.reduce((n,p)=>n+(+p.quantity||1),0)}
 
 function catalogueMeta(code){return catalogue.find(x=>String(x.code_barres||'')===String(code||''))||null}
 function looksLikeBarcodeName(name,code){const n=String(name||'').trim(),c=String(code||'').trim();return !n||(c&&n===c)||(/^\d{8,14}$/.test(n))}
-function mapRow(r){const code=r.code_barres||'',cat=catalogueMeta(code);return {id:r.id,name:(cat?.nom&&looksLikeBarcodeName(r.nom,code))?cat.nom:(r.nom||cat?.nom||code||'Produit'),barcode:code,quantity:r.quantite||1,expiry:r.dlc,department:cat?.rayon||r.rayon||'Frais',note:r.notes||cat?.notes||'',done:!!r.retire,doneAt:r.retire_at||null}}
+function normaliserDLC(valeur){
+  if(!valeur) return '';
+
+  const texte = String(valeur).trim().toLowerCase();
+
+  if(/^\d{4}-\d{2}-\d{2}$/.test(texte)){
+    return texte;
+  }
+
+  const mois = {
+    janvier:1, fevrier:2, février:2,
+    mars:3, avril:4, mai:5, juin:6,
+    juillet:7, aout:8, août:8,
+    septembre:9, octobre:10,
+    novembre:11, decembre:12, décembre:12
+  };
+
+  let m = texte.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+  if(m){
+    return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  }
+
+  m = texte.match(/^(\d{1,2})\s+([a-zéûô]+)\s+(\d{4})$/);
+
+  if(m && mois[m[2]]){
+    return `${m[3]}-${String(mois[m[2]]).padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+  }
+
+  return texte;
+}
+function mapRow(r){const code=r.code_barres||'',cat=catalogueMeta(code);return {id:r.id,name:(cat?.nom&&looksLikeBarcodeName(r.nom,code))?cat.nom:(r.nom||cat?.nom||code||'Produit'),barcode:code,quantity:r.quantite||1,expiry:normaliserDLC(r.dlc),department:cat?.rayon||r.rayon||'Frais',note:r.notes||cat?.notes||'',done:!!r.retire,doneAt:r.retire_at||null}}
 function saveLocal(){localStorage.setItem(KP,JSON.stringify(products))}
 function queue(op){let q=JSON.parse(localStorage.getItem(KQ)||'[]');q.push(op);localStorage.setItem(KQ,JSON.stringify(q))}
 async function flushQueue(){if(!navigator.onLine||!db||!magasinId)return;let q=JSON.parse(localStorage.getItem(KQ)||'[]'),left=[];for(const op of q){try{if(op.type==='insert')await addProductRemote(op.p,true);else if(op.type==='delete'){let {error}=await db.from('produits').delete().eq('id',op.id).eq('magasin_id',magasinId);if(error)throw error}else if(op.type==='update'){let {error}=await db.from('produits').update(op.payload).eq('id',op.id).eq('magasin_id',magasinId);if(error)throw error}}catch(e){left.push(op)}}localStorage.setItem(KQ,JSON.stringify(left));if(!left.length)await loadProducts(true)}
