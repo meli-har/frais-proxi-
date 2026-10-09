@@ -20,19 +20,39 @@ function icon(dep){return({'Crèmerie':'🥛','Charcuterie':'🥓','Frais':'🥬
 function status(p){if(p.done)return['Retiré','green'];let diff=Math.round((new Date(p.expiry+'T00:00:00')-today())/86400000);if(diff<=0)return["À retirer aujourd'hui",'red'];if(diff===1)return['Demain','orange'];return['Cette semaine','green']}
 function inWeek(p){let d=new Date(p.expiry+'T00:00:00'),t=today(),e=add(t,6);return d>=t&&d<=e}
 function arr(mode){
-  let t=iso(today()), tm=iso(add(today(),1));
-  let samedi=today().getDay()===6;
-  let dimanche=iso(add(today(),1));
+  const maintenant = today();
+  const jour = maintenant.getDay();
+
+  const demain = iso(add(maintenant, 1));
+
+  let datesRetrait = [];
+
+  if(jour === 5){
+    // Vendredi : samedi et dimanche
+    datesRetrait = [
+      iso(add(maintenant, 1)),
+      iso(add(maintenant, 2))
+    ];
+  } else if(jour === 6){
+    // Samedi : lundi
+    datesRetrait = [
+      iso(add(maintenant, 2))
+    ];
+  } else if(jour === 0){
+    // Dimanche : aucun retrait
+    datesRetrait = [];
+  } else {
+    // Lundi à jeudi : lendemain
+    datesRetrait = [demain];
+  }
 
   return products.filter(p =>
     !p.done && (
-      mode==='today'
-        ? (samedi
-    ? (p.expiry===t || p.expiry===dimanche)
-    : p.expiry===t)
-        : mode==='tomorrow'
-          ? p.expiry===tm
-          : mode==='week'
+      mode === 'today'
+        ? datesRetrait.includes(p.expiry)
+        : mode === 'tomorrow'
+          ? p.expiry === demain
+          : mode === 'week'
             ? inWeek(p)
             : true
     )
@@ -385,34 +405,65 @@ function render(){
 function openDaily(m){
   dailyMode=m;
   let a=arr(m);
+  a.sort((p1, p2) =>
+  String(p1.expiry).localeCompare(String(p2.expiry))
+);
   let d=m==='today'?today():add(today(),1);
 
-  $('dailyTitle').textContent=m==='today'
-    ? (today().getDay()===6 ? "À retirer ce week-end" : "À retirer aujourd'hui")
-    : "À surveiller demain";
+  $('dailyTitle').textContent = m === 'today'
+  ? "📋 Retraits à préparer"
+  : "À surveiller demain";
 
   $('dailyCount').textContent=qty(a)+' produits';
 
-  $('dailyDate').textContent='▣ '+new Intl.DateTimeFormat('fr-FR',{
+  $('dailyDate').textContent =
+  '📅 Préparation du ' +
+  new Intl.DateTimeFormat('fr-FR',{
     weekday:'long',
     day:'numeric',
     month:'long',
     year:'numeric'
-  }).format(d);
+  }).format(today());
 
 const cleDailyJour = 'fpDailyFaits_' + iso(today());
 
 const dailyFaits = JSON.parse(
   localStorage.getItem(cleDailyJour) || '{}'
 );
-
+let derniereDateAffichee = '';
 $('dailyList').innerHTML = a.length
   ? a.map(p => {
+    let titreJour = '';
+
+if(p.expiry !== derniereDateAffichee){
+  derniereDateAffichee = p.expiry;
+
+  const dateJour = new Date(p.expiry + 'T00:00:00');
+
+  const nomJour = new Intl.DateTimeFormat('fr-FR',{
+    weekday:'long',
+    day:'numeric',
+    month:'long'
+  }).format(dateJour);
+
+  titreJour = `
+    <div class="card" style="
+      margin:14px 0 10px;
+      padding:12px;
+      background:#e8f3ff;
+      color:#0055a4;
+      font-weight:800;
+    ">
+      📅 ${nomJour.toUpperCase()}
+    </div>
+  `;
+}
       const cle = `${p.id || ''}_${p.barcode || ''}_${p.expiry || ''}`;
       const fait = !!dailyFaits[cle];
 
       return `
-        <div class="product" style="${fait ? 'opacity:.55;' : ''}">
+        ${titreJour}
+<div class="product" style="${fait ? 'opacity:.55;' : ''}">
 
           <div class="picon productThumb">
             ${productPhotoHTML(p.barcode,p.name)}
