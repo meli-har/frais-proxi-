@@ -228,21 +228,52 @@ async function connecterEmploye(code) {
 
   return employeConnecte;
 }
+
 async function connectStore(code){
-  setSync('Connexion…');
+  setSync('Connexion au magasin…');
+
   await ensureAnonSession();
-  const {data,error}=await db.rpc('rejoindre_magasin_v552',{p_code:code,p_appareil:deviceLabel(),p_device_id:deviceId()});
+
+  const {data,error}=await db.rpc('rejoindre_magasin_v552',{
+    p_code:code,
+    p_appareil:deviceLabel(),
+    p_device_id:deviceId()
+  });
+
   if(error) throw error;
+
   magasinId=String(data);
-  localStorage.setItem(KM,magasinId);localStorage.setItem(KC,code);localStorage.setItem(KS,'Proxi - Monéteau');
+
   await loadMyAccess();
-  if(currentAccess?.actif===false) throw new Error('Cet accès a été désactivé par un administrateur');
-  await loadDepartmentsRemote();
-  await loadCatalogue();
-  await loadProducts();
-  setSync('Connecté à Proxi - Monéteau',true);
+
+  if(currentAccess?.actif===false){
+    throw new Error('Cet accès a été désactivé par un administrateur');
+  }
+
+  localStorage.setItem(KM,magasinId);
+  localStorage.setItem(KC,code);
+  localStorage.setItem(KS,'Proxi - Monéteau');
+
+  setSync('Magasin connecté — chargement des données…');
+
+  Promise.allSettled([
+    loadDepartmentsRemote(),
+    loadCatalogue(),
+    loadProducts()
+  ]).then(results=>{
+    const erreurs=results.filter(r=>r.status==='rejected');
+
+    if(erreurs.length){
+      console.error('Chargement incomplet :',erreurs);
+      setSync('Synchronisation incomplète');
+    }else{
+      setSync('Connecté à Proxi - Monéteau',true);
+    }
+  });
+
   startSyncTimer();
 }
+
 async function loadProducts(silent=false){
   if(!db || !magasinId) return;
 
