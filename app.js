@@ -228,21 +228,49 @@ async function connecterEmploye(code) {
 
   return employeConnecte;
 }
+
 async function connectStore(code){
-  setSync('Connexion…');
+  setSync('Connexion au magasin…');
+
   await ensureAnonSession();
-  const {data,error}=await db.rpc('rejoindre_magasin_v552',{p_code:code,p_appareil:deviceLabel(),p_device_id:deviceId()});
+
+  const {data,error}=await db.rpc('rejoindre_magasin_v552',{
+    p_code:code,
+    p_appareil:deviceLabel(),
+    p_device_id:deviceId()
+  });
+
   if(error) throw error;
+
   magasinId=String(data);
-  localStorage.setItem(KM,magasinId);localStorage.setItem(KC,code);localStorage.setItem(KS,'Proxi - Monéteau');
+
   await loadMyAccess();
-  if(currentAccess?.actif===false) throw new Error('Cet accès a été désactivé par un administrateur');
+
+  if(currentAccess?.actif===false){
+    throw new Error('Cet accès a été désactivé par un administrateur');
+  }
+
+  localStorage.setItem(KM,magasinId);
+  localStorage.setItem(KC,code);
+  localStorage.setItem(KS,'Proxi - Monéteau');
+
+  setSync('Magasin connecté — chargement des données…');
+
+  
+try {
   await loadDepartmentsRemote();
   await loadCatalogue();
   await loadProducts();
-  setSync('Connecté à Proxi - Monéteau',true);
-  startSyncTimer();
+
+  setSync('Connecté à Proxi - Monéteau', true);
+startSyncTimer();
+} catch (error) {
+  console.error('Chargement incomplet :', error);
+  setSync('Synchronisation incomplète');
 }
+
+}
+
 async function loadProducts(silent=false){
   if(!db || !magasinId) return;
 
@@ -636,12 +664,93 @@ function openCatalogueEditor(row=null){
   $('catalogueId').value=row?.id||'';$('catalogueBarcode').value=row?.code_barres||'';$('catalogueName').value=row?.nom||'';$('catalogueNotes').value=row?.notes||'';$('cataloguePhotoUrl').value=row?.photo_url||'';const preview=$('cataloguePhotoPreview');if(row?.photo_url){preview.src=row.photo_url;preview.classList.remove('hidden')}else{preview.removeAttribute('src');preview.classList.add('hidden')}fillCatalogueDepartments(row?.rayon||'');$('catalogueEditTitle').textContent=row?'Modifier la référence':'Ajouter une référence';$('deleteCatalogueBtn').classList.toggle('hidden',!row);show('catalogueEditView');
 }
 
+
 function startScan(){
-  if(scanner||!window.Quagga){$('scanStatus').textContent='Scanner indisponible. Utilisez la saisie manuelle.';return}
-  $('scanStatus').textContent='Placez le code-barres bien droit dans le cadre.';
-  Quagga.init({inputStream:{name:'Live',type:'LiveStream',target:$('reader'),constraints:{facingMode:{ideal:'environment'},width:{ideal:640},height:{ideal:480}},area:{top:'5%',right:'3%',left:'3%',bottom:'5%'}},locator:{patchSize:'large',halfSample:true},numOfWorkers:0,frequency:15,decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader','code_39_reader']},locate:true},err=>{if(err){$('scanStatus').textContent='Impossible d’ouvrir la caméra.';return}scanner=true;Quagga.start()});
-  Quagga.offDetected(onDetected);Quagga.onDetected(onDetected);
+  if(scanner || !window.Quagga){
+    if(!window.Quagga){
+      $('scanStatus').textContent =
+        'Scanner indisponible. Utilisez la saisie manuelle.';
+    }
+    return;
+  }
+
+  const reader = $('reader');
+  $('scanStatus').textContent = 'Ouverture de la caméra…';
+
+  // Nettoyer l'ancien affichage
+  reader.innerHTML = '';
+
+  const config = {
+    inputStream: {
+      name: 'Live',
+      type: 'LiveStream',
+      target: reader,
+      constraints: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 640 },
+        height: { ideal: 480 }
+      }
+    },
+    locator: {
+      patchSize: 'medium',
+      halfSample: true
+    },
+    numOfWorkers: 0,
+    frequency: 5,
+    decoder: {
+      readers: [
+        'ean_reader',
+        'ean_8_reader',
+        'upc_reader',
+        'upc_e_reader',
+        'code_128_reader',
+        'code_39_reader'
+      ]
+    },
+    locate: true
+  };
+
+  Quagga.init(config, err => {
+    if(err){
+      console.error('Erreur caméra Android :', err);
+      $('scanStatus').textContent =
+        'Impossible d’ouvrir la caméra : ' +
+        (err.message || String(err));
+      return;
+    }
+
+    const video = reader.querySelector('video');
+
+    if(video){
+      video.setAttribute('autoplay', '');
+      video.setAttribute('playsinline', '');
+      video.muted = true;
+      video.style.display = 'block';
+      video.style.visibility = 'visible';
+      video.style.opacity = '1';
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.style.objectFit = 'cover';
+    }
+
+    scanner = true;
+
+    try{
+      Quagga.start();
+      $('scanStatus').textContent =
+        'Placez le code-barres dans le cadre.';
+    }catch(e){
+      scanner = false;
+      console.error('Démarrage scanner :', e);
+      $('scanStatus').textContent =
+        'Erreur de démarrage : ' + e.message;
+    }
+  });
+
+  Quagga.offDetected(onDetected);
+  Quagga.onDetected(onDetected);
 }
+
 function onDetected(r){let code=r?.codeResult?.code;if(!code||code===last)return;last=code;navigator.vibrate?.(80);stopScan();identifyBarcode(code)}
 function stopScan(){if(scanner&&window.Quagga){try{Quagga.stop()}catch(e){}scanner=false}}
 $('startBtn').onclick=()=>{
