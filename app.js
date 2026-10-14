@@ -697,7 +697,7 @@ function startScan(){
       halfSample: true
     },
     numOfWorkers: 0,
-    frequency: 10,
+    frequency: 5,
     decoder: {
       readers: [
         'ean_reader',
