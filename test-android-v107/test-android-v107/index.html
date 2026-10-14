@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Test scanner Android V107</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #071b2b;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    #reader {
+      width: 100%;
+      height: 360px;
+      background: #172938;
+      overflow: hidden;
+      position: relative;
+    }
+    #reader video, #reader canvas {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover;
+    }
+    button {
+      padding: 16px;
+      margin: 16px;
+      font-size: 18px;
+      border: 0;
+      border-radius: 12px;
+      background: #35ba82;
+    }
+    #status {
+      padding: 15px;
+      overflow-wrap: anywhere;
+    }
+  </style>
+</head>
+<body>
+  <h2>Test caméra Android V107</h2>
+  <p>Aucune DLC ne sera modifiée.</p>
+  <button id="start">Démarrer la caméra</button>
+  <div id="reader"></div>
+  <div id="status">Prêt à tester</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+  <script>
+    const reader = document.getElementById('reader');
+    const status = document.getElementById('status');
+
+    document.getElementById('start').onclick = () => {
+      status.textContent = 'Ouverture de la caméra…';
+
+      if (!window.Quagga) {
+        status.textContent = 'Scanner non chargé';
+        return;
+      }
+
+      reader.innerHTML = '';
+
+      Quagga.init({
+        inputStream: {
+          name: 'Live',
+          type: 'LiveStream',
+          target: reader,
+          constraints: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          }
+        },
+        locator: {
+          patchSize: 'medium',
+          halfSample: true
+        },
+        numOfWorkers: 0,
+        frequency: 10,
+        decoder: {
+          readers: [
+            'ean_reader',
+            'ean_8_reader',
+            'upc_reader',
+            'upc_e_reader',
+            'code_128_reader',
+            'code_39_reader'
+          ]
+        },
+        locate: true
+      }, err => {
+        if (err) {
+          status.textContent =
+            'Erreur caméra : ' + (err.message || String(err));
+          return;
+        }
+
+        const video = reader.querySelector('video');
+
+        if (video) {
+          video.setAttribute('playsinline', '');
+          video.muted = true;
+          video.style.display = 'block';
+          video.style.visibility = 'visible';
+          video.style.opacity = '1';
+        }
+
+        try {
+          Quagga.start();
+          status.textContent =
+            'Caméra ouverte. Présentez un code-barres.';
+        } catch (e) {
+          status.textContent =
+            'Erreur démarrage : ' + e.message;
+        }
+      });
+
+      Quagga.offDetected();
+      Quagga.onDetected(result => {
+        const code = result?.codeResult?.code;
+        if (code) {
+          status.textContent = 'Code détecté : ' + code;
+        }
+      });
+    };
+  </script>
+</body>
+</html>
