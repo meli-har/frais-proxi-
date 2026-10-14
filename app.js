@@ -263,13 +263,12 @@ try {
   await loadProducts();
 
   setSync('Connecté à Proxi - Monéteau', true);
+startSyncTimer();
 } catch (error) {
   console.error('Chargement incomplet :', error);
   setSync('Synchronisation incomplète');
 }
 
-
-  startSyncTimer();
 }
 
 async function loadProducts(silent=false){
