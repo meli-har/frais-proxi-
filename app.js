@@ -639,7 +639,7 @@ function openCatalogueEditor(row=null){
 function startScan(){
   if(scanner||!window.Quagga){$('scanStatus').textContent='Scanner indisponible. Utilisez la saisie manuelle.';return}
   $('scanStatus').textContent='Placez le code-barres bien droit dans le cadre.';
-  Quagga.init({inputStream:{name:'Live',type:'LiveStream',target:$('reader'),constraints:{facingMode:'environment',width:{ideal:1280},height:{ideal:720}},area:{top:'5%',right:'3%',left:'3%',bottom:'5%'}},locator:{patchSize:'large',halfSample:true},numOfWorkers:0,frequency:15,decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader','code_39_reader']},locate:true},err=>{if(err){$('scanStatus').textContent='Impossible d’ouvrir la caméra.';return}scanner=true;Quagga.start()});
+  Quagga.init({inputStream:{name:'Live',type:'LiveStream',target:$('reader'),constraints:{facingMode:{ideal:'environment'},width:{ideal:640},height:{ideal:480}},area:{top:'5%',right:'3%',left:'3%',bottom:'5%'}},locator:{patchSize:'large',halfSample:true},numOfWorkers:0,frequency:15,decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader','code_39_reader']},locate:true},err=>{if(err){$('scanStatus').textContent='Impossible d’ouvrir la caméra.';return}scanner=true;Quagga.start()});
   Quagga.offDetected(onDetected);Quagga.onDetected(onDetected);
 }
 function onDetected(r){let code=r?.codeResult?.code;if(!code||code===last)return;last=code;navigator.vibrate?.(80);stopScan();identifyBarcode(code)}
