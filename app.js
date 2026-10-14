@@ -256,20 +256,18 @@ async function connectStore(code){
 
   setSync('Magasin connecté — chargement des données…');
 
-  Promise.allSettled([
-    loadDepartmentsRemote(),
-    loadCatalogue(),
-    loadProducts()
-  ]).then(results=>{
-    const erreurs=results.filter(r=>r.status==='rejected');
+  
+try {
+  await loadDepartmentsRemote();
+  await loadCatalogue();
+  await loadProducts();
 
-    if(erreurs.length){
-      console.error('Chargement incomplet :',erreurs);
-      setSync('Synchronisation incomplète');
-    }else{
-      setSync('Connecté à Proxi - Monéteau',true);
-    }
-  });
+  setSync('Connecté à Proxi - Monéteau', true);
+} catch (error) {
+  console.error('Chargement incomplet :', error);
+  setSync('Synchronisation incomplète');
+}
+
 
   startSyncTimer();
 }
